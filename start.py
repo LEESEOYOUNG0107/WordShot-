@@ -7,7 +7,7 @@ def startScreen(screen, clock, background, startBtn, owl, wardshot, WIDTH, HEIGH
     #'START'가 클릭되면 True를 반환하고, '종료'하면 False를 반환
     wardshot_rect = wardshot.get_rect(center = (WIDTH / 2, HEIGHT * 0.2))
     owl_rect = owl.get_rect(center = (WIDTH / 2, HEIGHT * 0.53))
-    startBtn_rect = startBtn.get_rect(center = (WIDTH / 2, HEIGHT * 0.75))
+    startBtn_rect = startBtn.get_rect(center = (WIDTH / 2, HEIGHT * 0.81))
 
     waiting = True
     while waiting:
