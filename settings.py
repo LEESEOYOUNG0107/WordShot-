@@ -1,7 +1,7 @@
 import pygame
 
 # 화면 설정
-SCREEN_WIDTH = 500
+SCREEN_WIDTH = 450
 SCREEN_HEIGHT = 700
 
 # 색상 정의

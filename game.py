@@ -1,4 +1,25 @@
-import pygame
+# C:/Users/LG/Documents/Word-Shot/game.py
+
+def update(self):
+    # ... (생략) ...
+
+    current_time = time.time()
+    if current_time - self.last_enemy_spawn_time > self.enemy_spawn_interval:
+        self.enemies.append(Enemy())
+        self.last_enemy_spawn_time = current_time
+
+        # 점수 구간별로 난이도 조정
+        if self.score > 50 and self.enemy_spawn_interval > 2.0:
+            self.enemy_spawn_interval -= 0.1
+        elif self.score > 100 and self.enemy_spawn_interval > 1.5:
+            self.enemy_spawn_interval -= 0.1
+        elif self.score > 200 and self.enemy_spawn_interval > 1.0:
+            self.enemy_spawn_interval -= 0.1
+
+        # 최소 간격 제한 (너무 빨라지는 것 방지)
+        self.enemy_spawn_interval = max(self.enemy_spawn_interval, 0.7)
+
+    # ... (생략) ...import pygame
 import random
 import time
 from settings import *
