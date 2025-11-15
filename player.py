@@ -56,5 +56,5 @@ class Player(pygame.sprite.Sprite):
         screen.blit(self.image, self.rect)
 
     def get_pos(self):
-        # 총알 발사 위치 (이미지의 중앙 상단)
+        # 총알 발사 위치 (이미지의 중앙 상단)ㄴ
         return self.rect.centerx, self.rect.top
