@@ -2,64 +2,60 @@ import pygame
 from settings import *
 
 
-class Player:
-    def __init__(self, screen_rect):  # 1. screen_rect를 인자로 받음
-        self.screen_rect = screen_rect  # 2. screen_rect 저장
+class Player(pygame.sprite.Sprite):
+    def __init__(self, play_area_rect):
+        super().__init__()
+
+        self.play_area_rect = play_area_rect
+
+        # [수정] 플레이어 이미지 로드
         try:
-            # 이미지 파일 로드 시도
-            self.image = pygame.image.load("font/player.png").convert_alpha()
-            self.image = pygame.transform.scale(self.image, (50, 50))  # 이미지 크기를 정사각형으로 변경
+            # [수정] .png 파일이므로 .convert_alpha() 사용 (투명도 지원)
+            original_image = pygame.image.load("img/character.png").convert_alpha()
+
+            # 이미지 비율 유지하면서 너비 40픽셀로 조정
+            self.image_width = 40
+            self.image_height = int(original_image.get_height() * (self.image_width / original_image.get_width()))
+            self.image = pygame.transform.scale(original_image, (self.image_width, self.image_height))
         except FileNotFoundError:
-            # 파일을 찾지 못하면 image를 None으로 설정
-            self.image = None
+            # [수정] 오류 메시지도 .png로 변경
+            print("경고: 'img/character.png' 파일을 찾을 수 없습니다. 기본 파스텔 블루 사각형으로 실행됩니다.")
+            self.image = pygame.Surface([40, 10])  # 기본 사각형 크기
+            self.image.fill(PASTEL_BLUE)
 
-        self.width = 50
-        self.height = 20
+            # (투명도 없는 사각형이므로 .convert()는 여기서 괜찮습니다)
+            # 만약 사각형도 투명하게 하려면 아래 2줄 주석 해제
+            # self.image.set_colorkey(BLACK) # 검은색을 투명으로
+            # self.image = self.image.convert_alpha()
 
-        # 3. screen_rect 기준으로 초기 위치 설정
-        self.x = self.screen_rect.centerx - self.width // 2
-        self.y = self.screen_rect.bottom - self.height - 10  # 화면 하단에 배치 (10px 여백)
+        self.rect = self.image.get_rect()
+        self.reset(play_area_rect)  # 초기 위치 설정
 
-        self.speed = 5
-        self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
+        self.speed = 5  # 플레이어 이동 속도
 
-        # 4. (개선) 이미지가 있으면 rect를 이미지에 맞게 재설정
-        if self.image:
-            self.rect = self.image.get_rect(centerx=self.screen_rect.centerx,
-                                            bottom=self.screen_rect.bottom - 10)
-        else:
-            self.rect = pygame.Rect(0, 0, self.width, self.height)
-            self.rect.centerx = self.screen_rect.centerx
-            self.rect.bottom = self.screen_rect.bottom - 10
+    def reset(self, play_area_rect):
+        self.play_area_rect = play_area_rect
+        # 플레이어를 게임 영역의 중앙 하단에 위치
+        self.rect.centerx = self.play_area_rect.centerx
+        self.rect.bottom = self.play_area_rect.bottom - 5  # 바닥에서 약간 위로
 
     def update(self):
+        # 키 입력 처리
         keys = pygame.key.get_pressed()
-
-        # 5. screen_rect의 왼쪽 경계 확인
         if keys[pygame.K_LEFT]:
             self.rect.x -= self.speed
-        # 6. screen_rect의 오른쪽 경계 확인
         if keys[pygame.K_RIGHT]:
             self.rect.x += self.speed
 
-        # 7. (안전장치) 경계를 벗어나지 않도록 고정
-        if self.rect.left < self.screen_rect.left: # self.screen_rect.left는 0
-            self.rect.left = self.screen_rect.left
-        if self.rect.right > self.screen_rect.right: # self.screen_rect.right는 SCREEN_WIDTH
-            self.rect.right = self.screen_rect.right
+        # 화면 밖으로 나가지 않도록 제한 (PLAY_AREA_RECT 기준)
+        if self.rect.left < self.play_area_rect.left:
+            self.rect.left = self.play_area_rect.left
+        if self.rect.right > self.play_area_rect.right:
+            self.rect.right = self.play_area_rect.right
 
     def draw(self, screen):
-        if self.image:
-            # 이미지가 있으면 이미지를 그림
-            screen.blit(self.image, self.rect)
-        else:
-            # 이미지가 없으면 파스텔톤 파란색 사각형을 그림
-            pygame.draw.rect(screen, PASTEL_BLUE, self.rect)
-
-    def reset(self, screen_rect):  # 8. screen_rect를 인자로 받음
-        # 9. screen_rect 기준으로 위치 리셋
-        self.rect.centerx = screen_rect.centerx
-        self.rect.bottom = screen_rect.bottom - 10  # __init__과 동일하게
+        screen.blit(self.image, self.rect)
 
     def get_pos(self):
-        return self.rect.midtop
+        # 총알 발사 위치 (이미지의 중앙 상단)
+        return self.rect.centerx, self.rect.top

@@ -43,14 +43,12 @@ class Game:
 
         # --- 버튼 클릭 영역(Rect)을 __init__에서 미리 생성 ---
         if self.start_button_image:
-            # 이미지가 있으면 이미지 크기로 Rect 생성
             self.start_button_rect = self.start_button_image.get_rect(
-                center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery + 90)  # <-- 여기 숫자
+                center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery + 30)
             )
         else:
-            # 이미지가 없으면 텍스트 버튼 크기로 Rect 생성
             self.start_button_rect = pygame.Rect(0, 0, 150, 40)
-            self.start_button_rect.center = (PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery + 30)  # <-- 여기 숫자
+            self.start_button_rect.center = (PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery + 30)
 
         pygame.key.set_repeat(500, 30)
         pygame.display.set_caption("WordShot")
@@ -112,7 +110,6 @@ class Game:
                     pygame.key.start_text_input()
 
             elif self.game_state == "GAME_OVER":
-                # (버그 수정 대비) restart_button_rect가 정의되었는지 확인
                 if hasattr(self,
                            'restart_button_rect') and event.type == pygame.MOUSEBUTTONDOWN and self.restart_button_rect.collidepoint(
                         event.pos):
@@ -193,7 +190,6 @@ class Game:
         pygame.display.flip()
 
     def draw_start_screen(self):
-        # 로고 이미지 그리기
         if self.logo_image:
             logo_rect = self.logo_image.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery - 40))
             self.screen.blit(self.logo_image, logo_rect)
@@ -202,7 +198,6 @@ class Game:
             title_rect = title_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery - 40))
             self.screen.blit(title_text, title_rect)
 
-        # Start 버튼 그리기
         if self.start_button_image:
             self.screen.blit(self.start_button_image, self.start_button_rect)
         else:
@@ -225,11 +220,8 @@ class Game:
         saja_rect = saja_text.get_rect(center=SAJA_WORD_POS)
         self.screen.blit(saja_text, saja_rect)
 
-        #
-        # [오타 수정] SAJA_MEAN_POS -> SAJA_MEANING_POS
-        #
         meaning_text = FONT_SMALL.render(self.current_saja['meaning'], True, WHITE)
-        meaning_rect = meaning_text.get_rect(center=SAJA_MEANING_POS)
+        meaning_rect = meaning_text.get_rect(center=SAJA_MEANING_POS)  # <-- 오타 수정됨
         self.screen.blit(meaning_text, meaning_rect)
 
         input_text = FONT_MEDIUM.render(self.user_input, True, PASTEL_YELLOW)
@@ -242,12 +234,10 @@ class Game:
         input_rect = input_text.get_rect(midbottom=(UI_CENTER_X, INPUT_BOX_Y))
         self.screen.blit(input_text, input_rect)
 
-        # 점수 (전체 화면 기준)
         score_text = FONT_GUI.render(f"{self.score}", True, WHITE)
         score_rect = score_text.get_rect(center=SCORE_POS)
         self.screen.blit(score_text, score_rect)
 
-        # 목숨 (전체 화면 기준)
         lives_text = FONT_GUI.render(f"LIVES: {self.lives}", True, WHITE)
         lives_rect = lives_text.get_rect(center=LIVES_POS)
         self.screen.blit(lives_text, lives_rect)
@@ -283,11 +273,9 @@ class Game:
             self.screen.blit(word_text, word_rect)
             current_x = word_rect.right + 10
 
-        # '처음으로' 버튼 (클릭 영역)
         self.restart_button_rect = pygame.Rect(0, 0, 150, 40)
         self.restart_button_rect.center = (PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.bottom - 25)
 
-        # '처음으로' 버튼 (그리기)
         pygame.draw.rect(self.screen, MINT, self.restart_button_rect)
         restart_text = FONT_MEDIUM.render("처음으로", True, WHITE)
         restart_text_rect = restart_text.get_rect(center=self.restart_button_rect.center)
