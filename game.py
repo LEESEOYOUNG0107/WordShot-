@@ -5,7 +5,7 @@ from settings import *
 from player import Player
 from enemy import Enemy
 from bullet import Bullet
-from heart import Heart  # heart.py에서 Heart 클래스 가져오기
+from heart import Heart
 
 
 # --- 폭발 효과 클래스 (수정 없음) ---
@@ -174,7 +174,6 @@ class Game:
             self.user_input = ""
 
     def update(self):
-        # '게임 중'일 때만 update 로직 실행
         if self.game_state != "PLAYING":
             return
 
@@ -216,7 +215,6 @@ class Game:
             self.game_state = "GAME_OVER"
             pygame.key.stop_text_input()
 
-        # --- 충돌 감지 로직 (수정 없음) ---
         bullets_to_remove = []
         enemies_to_remove = []
         hearts_to_remove = []
@@ -254,86 +252,75 @@ class Game:
             if not explosion.update():
                 self.explosions.remove(explosion)
 
-    # --- 점수와 목숨을 그리는 전용 함수 (수정 없음) ---
+    # --- 점수와 목숨을 그리는 전용 함수 ---
     def draw_main_ui(self):
-        # 1. 점수 그리기 (settings.py의 SCORE_POS - 좌측 상단)
-        score_text = FONT_GUI.render(f"{self.score}", True, WHITE)
+        # 1. 점수 그리기 (WHITE -> BLACK)
+        score_text = FONT_GUI.render(f"{self.score}", True, BLACK)
         score_rect = score_text.get_rect(center=SCORE_POS)
         self.screen.blit(score_text, score_rect)
 
         # 2. 목숨 (heart.png 이미지로 그리기)
         if self.heart_ui_image:
-            # settings.py의 LIVES_POS (우측 상단) 위치에서 그리기 시작
             start_x = LIVES_POS[0]
             start_y = LIVES_POS[1]
             heart_width = self.heart_ui_image.get_width()
-            heart_padding = 5  # 하트 사이 간격
+            heart_padding = 5
 
             for i in range(self.lives):
                 x_pos = start_x + (i * (heart_width + heart_padding))
                 y_pos = start_y - self.heart_ui_image.get_height() // 2
                 self.screen.blit(self.heart_ui_image, (x_pos, y_pos))
         else:
-            # (대체) 이미지 로드 실패 시 텍스트로 표시
-            lives_text = FONT_GUI.render(f"LIVES: {self.lives}", True, WHITE)
+            # (대체) 텍스트로 표시 (WHITE -> BLACK)
+            lives_text = FONT_GUI.render(f"LIVES: {self.lives}", True, BLACK)
             lives_rect = lives_text.get_rect(center=LIVES_POS)
             self.screen.blit(lives_text, lives_rect)
 
-    # --------------------------------------------------
-
-    # --- [수정] draw 함수: 메인 UI를 'PLAYING'과 'GAME_OVER'에서만 그리도록 변경 ---
+    # --- draw 함수 (수정 없음) ---
     def draw(self):
-        # 1. 배경 그리기
         self.screen.fill(BLACK)
         if self.game_background_image:
             self.screen.blit(self.game_background_image, (0, 0))
         else:
             pygame.draw.rect(self.screen, BLACK, PLAY_AREA_RECT)
 
-        # 2. 게임 상태에 맞는 화면 그리기
         if self.game_state == "START":
             self.draw_start_screen()
 
         elif self.game_state == "PLAYING":
             self.draw_playing_screen()
-            # [수정] '게임 중'일 때만 메인 UI 그리기
             self.draw_main_ui()
 
         elif self.game_state == "GAME_OVER":
             self.draw_game_over_screen()
-            # [수정] '게임 오버'일 때만 메인 UI 그리기
             self.draw_main_ui()
 
-        # 3. [수정] '항상' 그리던 UI 호출을 위로 옮기고, 'START'에선 제외함
-
-        # 4. 화면 최종 업데이트
         pygame.display.flip()
 
-    # --------------------------------------------------
-
     def draw_start_screen(self):
-        # (수정 없음)
+        # 로고 이미지 (수정 없음)
         if self.logo_image:
             logo_rect = self.logo_image.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery - 40))
             self.screen.blit(self.logo_image, logo_rect)
         else:
-            title_text = FONT_LARGE.render("WordShot", True, WHITE)
+            # 로고 텍스트 (WHITE -> BLACK)
+            title_text = FONT_LARGE.render("WordShot", True, BLACK)
             title_rect = title_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery - 40))
             self.screen.blit(title_text, title_rect)
 
+        # 버튼 이미지 (수정 없음)
         if self.start_button_image:
             self.screen.blit(self.start_button_image, self.start_button_rect)
         else:
+            # 텍스트 버튼 (WHITE -> BLACK)
             pygame.draw.rect(self.screen, MINT, self.start_button_rect)
-            start_text = FONT_MEDIUM.render("Start", True, WHITE)
+            start_text = FONT_MEDIUM.render("Start", True, BLACK)  # WHITE -> BLACK
             start_text_rect = start_text.get_rect(center=self.start_button_rect.center)
             self.screen.blit(start_text, start_text_rect)
 
     def draw_playing_screen(self):
-        # (수정 없음)
-        # 1. 게임 요소 그리기
+        # 1. 게임 요소 그리기 (수정 없음)
         self.player.draw(self.screen)
-
         for bullet in self.bullets:
             if bullet.rect.colliderect(PLAY_AREA_RECT):
                 bullet.draw(self.screen)
@@ -347,14 +334,17 @@ class Game:
             explosion.draw(self.screen)
 
         # 2. 게임 영역 UI 그리기 (사자성어, 입력창)
-        saja_text = FONT_MEDIUM.render(self.current_saja['word'], True, WHITE)
+        # 사자성어 (WHITE -> BLACK)
+        saja_text = FONT_MEDIUM.render(self.current_saja['word'], True, BLACK)
         saja_rect = saja_text.get_rect(center=SAJA_WORD_POS)
         self.screen.blit(saja_text, saja_rect)
 
-        meaning_text = FONT_SMALL.render(self.current_saja['meaning'], True, WHITE)
+        # 사자성어 뜻 (WHITE -> BLACK)
+        meaning_text = FONT_SMALL.render(self.current_saja['meaning'], True, BLACK)
         meaning_rect = meaning_text.get_rect(center=SAJA_MEANING_POS)
         self.screen.blit(meaning_text, meaning_rect)
 
+        # 입력창 (수정 없음 - PASTEL_YELLOW 유지)
         input_text = FONT_MEDIUM.render(self.user_input, True, PASTEL_YELLOW)
         underline_width = max(100, input_text.get_width() + 10)
         underline_pos_start = (UI_CENTER_X - underline_width // 2, INPUT_BOX_Y + 5)
@@ -364,15 +354,17 @@ class Game:
         self.screen.blit(input_text, input_rect)
 
     def draw_game_over_screen(self):
-        # (수정 없음)
+        # 게임 오버 텍스트 (PASTEL_PINK 유지)
         game_over_text = FONT_LARGE.render("게임 오버", True, PASTEL_PINK)
         game_over_rect = game_over_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.top + 40))
         self.screen.blit(game_over_text, game_over_rect)
 
-        final_score_text = FONT_MEDIUM.render(f"최종 점수: {self.score}", True, WHITE)
+        # 최종 점수 (WHITE -> BLACK)
+        final_score_text = FONT_MEDIUM.render(f"최종 점수: {self.score}", True, BLACK)
         final_score_rect = final_score_text.get_rect(center=(PLAY_AREA_RECT.centerx, game_over_rect.bottom + 30))
         self.screen.blit(final_score_text, final_score_rect)
 
+        # 맞춘 사자성어 (PASTEL_YELLOW 유지)
         correct_list_text = FONT_SMALL.render("맞춘 사자성어:", True, PASTEL_YELLOW)
         correct_list_rect = correct_list_text.get_rect(center=(PLAY_AREA_RECT.centerx, final_score_rect.bottom + 30))
         self.screen.blit(correct_list_text, correct_list_rect)
@@ -381,7 +373,8 @@ class Game:
         current_x = start_x
         current_y = correct_list_rect.bottom + 10
         for i, word in enumerate(self.correct_saja_list):
-            word_text = FONT_SMALL.render(word, True, WHITE)
+            # 맞춘 사자성어 목록 (WHITE -> BLACK)
+            word_text = FONT_SMALL.render(word, True, BLACK)
             word_rect = word_text.get_rect(topleft=(current_x, current_y))
 
             if word_rect.right > PLAY_AREA_RECT.right - 10:
@@ -399,6 +392,7 @@ class Game:
         self.restart_button_rect.center = (PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.bottom - 25)
 
         pygame.draw.rect(self.screen, MINT, self.restart_button_rect)
-        restart_text = FONT_MEDIUM.render("처음으로", True, WHITE)
+        # '처음으로' 버튼 텍스트 (WHITE -> BLACK)
+        restart_text = FONT_MEDIUM.render("처음으로", True, BLACK)
         restart_text_rect = restart_text.get_rect(center=self.restart_button_rect.center)
         self.screen.blit(restart_text, restart_text_rect)
