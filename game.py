@@ -252,10 +252,10 @@ class Game:
             if not explosion.update():
                 self.explosions.remove(explosion)
 
-    # --- 점수와 목숨을 그리는 전용 함수 ---
+    # --- [수정] 점수와 목숨을 그리는 전용 함수 (DEEP_PINK) ---
     def draw_main_ui(self):
-        # 1. 점수 그리기 (WHITE -> BLACK)
-        score_text = FONT_GUI.render(f"{self.score}", True, BLACK)
+        # 1. 점수 그리기 (DEEP_PINK)
+        score_text = FONT_GUI.render(f"{self.score}", True, DEEP_PINK)
         score_rect = score_text.get_rect(center=SCORE_POS)
         self.screen.blit(score_text, score_rect)
 
@@ -271,8 +271,8 @@ class Game:
                 y_pos = start_y - self.heart_ui_image.get_height() // 2
                 self.screen.blit(self.heart_ui_image, (x_pos, y_pos))
         else:
-            # (대체) 텍스트로 표시 (WHITE -> BLACK)
-            lives_text = FONT_GUI.render(f"LIVES: {self.lives}", True, BLACK)
+            # (대체) 텍스트로 표시 (DEEP_PINK)
+            lives_text = FONT_GUI.render(f"LIVES: {self.lives}", True, DEEP_PINK)
             lives_rect = lives_text.get_rect(center=LIVES_POS)
             self.screen.blit(lives_text, lives_rect)
 
@@ -297,27 +297,25 @@ class Game:
 
         pygame.display.flip()
 
+    # --- [수정] draw_start_screen (DEEP_PINK) ---
     def draw_start_screen(self):
-        # 로고 이미지 (수정 없음)
         if self.logo_image:
             logo_rect = self.logo_image.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery - 40))
             self.screen.blit(self.logo_image, logo_rect)
         else:
-            # 로고 텍스트 (WHITE -> BLACK)
-            title_text = FONT_LARGE.render("WordShot", True, BLACK)
+            title_text = FONT_LARGE.render("WordShot", True, DEEP_PINK)
             title_rect = title_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery - 40))
             self.screen.blit(title_text, title_rect)
 
-        # 버튼 이미지 (수정 없음)
         if self.start_button_image:
             self.screen.blit(self.start_button_image, self.start_button_rect)
         else:
-            # 텍스트 버튼 (WHITE -> BLACK)
             pygame.draw.rect(self.screen, MINT, self.start_button_rect)
-            start_text = FONT_MEDIUM.render("Start", True, BLACK)  # WHITE -> BLACK
+            start_text = FONT_MEDIUM.render("Start", True, DEEP_PINK)
             start_text_rect = start_text.get_rect(center=self.start_button_rect.center)
             self.screen.blit(start_text, start_text_rect)
 
+    # --- [수정] draw_playing_screen (색상 재지정) ---
     def draw_playing_screen(self):
         # 1. 게임 요소 그리기 (수정 없음)
         self.player.draw(self.screen)
@@ -333,34 +331,35 @@ class Game:
         for explosion in self.explosions:
             explosion.draw(self.screen)
 
-        # 2. 게임 영역 UI 그리기 (사자성어, 입력창)
-        # 사자성어 (WHITE -> BLACK)
-        saja_text = FONT_MEDIUM.render(self.current_saja['word'], True, BLACK)
+        # 2. 게임 영역 UI 그리기
+        # [유지] 사자성어 단어 (DEEP_PINK)
+        saja_text = FONT_MEDIUM.render(self.current_saja['word'], True, DEEP_PINK)
         saja_rect = saja_text.get_rect(center=SAJA_WORD_POS)
         self.screen.blit(saja_text, saja_rect)
 
-        # 사자성어 뜻 (WHITE -> BLACK)
-        meaning_text = FONT_SMALL.render(self.current_saja['meaning'], True, BLACK)
+        # [수정] 사자성어 뜻 (DEEP_PINK -> MEDIUM_GRAY)
+        meaning_text = FONT_SMALL.render(self.current_saja['meaning'], True, MEDIUM_GRAY)
         meaning_rect = meaning_text.get_rect(center=SAJA_MEANING_POS)
         self.screen.blit(meaning_text, meaning_rect)
 
-        # 입력창 (수정 없음 - PASTEL_YELLOW 유지)
-        input_text = FONT_MEDIUM.render(self.user_input, True, PASTEL_YELLOW)
+        # [수정] 입력창 (글자는 MUSTARD, 밑줄도 MUSTARD)
+        input_text = FONT_MEDIUM.render(self.user_input, True, MUSTARD)
         underline_width = max(100, input_text.get_width() + 10)
         underline_pos_start = (UI_CENTER_X - underline_width // 2, INPUT_BOX_Y + 5)
         underline_pos_end = (UI_CENTER_X + underline_width // 2, INPUT_BOX_Y + 5)
-        pygame.draw.line(self.screen, PASTEL_YELLOW, underline_pos_start, underline_pos_end, 2)
+        pygame.draw.line(self.screen, MUSTARD, underline_pos_start, underline_pos_end, 2)
         input_rect = input_text.get_rect(midbottom=(UI_CENTER_X, INPUT_BOX_Y))
         self.screen.blit(input_text, input_rect)
 
+    # --- [수정] draw_game_over_screen (DEEP_PINK) ---
     def draw_game_over_screen(self):
         # 게임 오버 텍스트 (PASTEL_PINK 유지)
         game_over_text = FONT_LARGE.render("게임 오버", True, PASTEL_PINK)
         game_over_rect = game_over_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.top + 40))
         self.screen.blit(game_over_text, game_over_rect)
 
-        # 최종 점수 (WHITE -> BLACK)
-        final_score_text = FONT_MEDIUM.render(f"최종 점수: {self.score}", True, BLACK)
+        # 최종 점수 (DEEP_PINK)
+        final_score_text = FONT_MEDIUM.render(f"최종 점수: {self.score}", True, DEEP_PINK)
         final_score_rect = final_score_text.get_rect(center=(PLAY_AREA_RECT.centerx, game_over_rect.bottom + 30))
         self.screen.blit(final_score_text, final_score_rect)
 
@@ -373,8 +372,8 @@ class Game:
         current_x = start_x
         current_y = correct_list_rect.bottom + 10
         for i, word in enumerate(self.correct_saja_list):
-            # 맞춘 사자성어 목록 (WHITE -> BLACK)
-            word_text = FONT_SMALL.render(word, True, BLACK)
+            # 맞춘 사자성어 목록 (DEEP_PINK)
+            word_text = FONT_SMALL.render(word, True, DEEP_PINK)
             word_rect = word_text.get_rect(topleft=(current_x, current_y))
 
             if word_rect.right > PLAY_AREA_RECT.right - 10:
@@ -392,7 +391,7 @@ class Game:
         self.restart_button_rect.center = (PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.bottom - 25)
 
         pygame.draw.rect(self.screen, MINT, self.restart_button_rect)
-        # '처음으로' 버튼 텍스트 (WHITE -> BLACK)
-        restart_text = FONT_MEDIUM.render("처음으로", True, BLACK)
+        # '처음으로' 버튼 텍스트 (DEEP_PINK)
+        restart_text = FONT_MEDIUM.render("처음으로", True, DEEP_PINK)
         restart_text_rect = restart_text.get_rect(center=self.restart_button_rect.center)
         self.screen.blit(restart_text, restart_text_rect)
