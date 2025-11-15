@@ -11,31 +11,18 @@ class Game:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        self.screen_rect = self.screen.get_rect() # 화면 전체 Rect. Player 등에게 전달
+        self.screen_rect = self.screen.get_rect()
 
-        # 1. 프레임 이미지 불러오기 (전체 배경)
-        #    -> 이 부분은 삭제합니다 (사용 안 함)
-        # try:
-        #     self.frame_image = pygame.image.load("img/frame.png").convert()
-        #     self.frame_image = pygame.transform.scale(self.frame_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
-        # except FileNotFoundError:
-        #     print("경고: 'img/frame.jpg' 파일을 찾을 수 없습니다. 검은색 배경으로 실행됩니다.")
-        #     self.frame_image = None  # 프레임이 없어도 실행은 되도록
-        self.frame_image = None # 사용 안 함
-
-        # 2. 게임 영역 배경 이미지 불러오기 (전체 화면 배경으로 사용)
         try:
-            self.game_background_image = pygame.image.load("img/background.png").convert()
-            # SCREEN_WIDTH, SCREEN_HEIGHT 크기에 맞게 스케일링
+            # 'background.png' 로드
+            self.game_background_image = pygame.image.load("img/background.png").convert_alpha()
             self.game_background_image = pygame.transform.scale(self.game_background_image,
                                                                 (SCREEN_WIDTH, SCREEN_HEIGHT))
         except FileNotFoundError:
-            print("경고: 'img/background.jpg' 파일을 찾을 수 없습니다. 게임 영역이 검은색으로 표시됩니다.")
-            self.game_background_image = None  # 게임 배경이 없어도 실행
+            print("경고: 'img/background.png' 파일을 찾을 수 없습니다.")
+            self.game_background_image = None
 
-        # 키 반복 기능 활성화
         pygame.key.set_repeat(500, 30)
-
         pygame.display.set_caption("WordShot")
         self.clock = pygame.time.Clock()
         self.running = True
@@ -51,13 +38,11 @@ class Game:
             {"word": "자화자찬", "meaning": "자기가 한 일을 스스로 칭찬함"},
         ]
 
-        # Player 객체 생성 시 화면 전체 Rect 전달
-        self.player = Player(self.screen_rect)
+        self.player = Player(PLAY_AREA_RECT)
         self.reset_game_variables()
 
     def reset_game_variables(self):
-        # 리셋 시에도 화면 전체 Rect 전달
-        self.player.reset(self.screen_rect)
+        self.player.reset(PLAY_AREA_RECT)
         self.bullets = []
         self.enemies = []
         self.bullet_count = 0
@@ -65,7 +50,7 @@ class Game:
         self.current_saja = random.choice(self.saja_list)
         self.score = 0
         self.correct_saja_list = []
-        self.lives = 3  # 목숨 3개로 초기화
+        self.lives = 3
         self.last_enemy_spawn_time = time.time()
         self.enemy_spawn_interval = 4.0
 
@@ -121,34 +106,27 @@ class Game:
         if self.game_state != "PLAYING":
             return
 
-        # Player 업데이트 (player.py에서 screen_rect 기준으로 수정됨)
         self.player.update()
 
         for bullet in self.bullets:
             bullet.update()
-            # 총알이 화면 상단(0)을 벗어나면 제거
-            if bullet.rect.bottom < 0:
+            if bullet.rect.bottom < PLAY_AREA_RECT.top:
                 self.bullets.remove(bullet)
 
         current_time = time.time()
         if current_time - self.last_enemy_spawn_time > self.enemy_spawn_interval:
-            # 적 생성 시 화면 전체 Rect 전달
-            self.enemies.append(Enemy(self.screen_rect))
+            self.enemies.append(Enemy(PLAY_AREA_RECT))
             self.last_enemy_spawn_time = current_time
 
             if self.score > 50 and self.enemy_spawn_interval > 2.0:
                 self.enemy_spawn_interval -= 0.1
             elif self.score > 100 and self.enemy_spawn_interval > 1.5:
                 self.enemy_spawn_interval -= 0.1
-            elif self.score > 200 and self.enemy_spawn_interval > 1.0:
-                self.enemy_spawn_interval -= 0.1
-            self.enemy_spawn_interval = max(self.enemy_spawn_interval, 0.7)
+            self.enemy_spawn_interval = max(self.enemy_spawn_interval, 1.0)  # 0.7 -> 1.0 (영역이 좁아져서)
 
         for enemy in self.enemies:
             enemy.update()
-
-            # 적이 화면 하단(SCREEN_HEIGHT)을 벗어나면 제거 및 목숨 감소
-            if enemy.rect.top > SCREEN_HEIGHT:
+            if enemy.rect.top > PLAY_AREA_RECT.bottom:
                 self.enemies.remove(enemy)
                 self.lives -= 1
 
@@ -158,29 +136,23 @@ class Game:
 
         for bullet in self.bullets:
             for enemy in self.enemies:
-                if bullet.rect.colliderect(enemy.rect.inflate(30, 30)):
+                if bullet.rect.colliderect(enemy.rect.inflate(10, 10)):  # 30->10
                     self.bullets.remove(bullet)
                     self.enemies.remove(enemy)
                     self.score += 10
                     break
 
     def draw(self):
-        # 1. 기본 검은색 배경 (이미지 로딩 실패시 대비)
+        # 1. 검은색 배경
         self.screen.fill(BLACK)
-
-        # 2. 프레임 이미지 그리기 (game machine) -> 삭제
-        # if self.frame_image:
-        #     self.screen.blit(self.frame_image, (0, 0))
-
-        # 3. 게임 영역 배경 그리기 (background.png)
+        # 2. 전체 배경 그리기 (background.png)
         if self.game_background_image:
-            # (0, 0) 위치에 게임 배경을 그림 (전체 화면)
             self.screen.blit(self.game_background_image, (0, 0))
-        # else:
-            # 게임 배경 이미지가 없으면, 위에서 칠한 검은색으로 표시됨
-            # pygame.draw.rect(self.screen, BLACK, PLAY_AREA_RECT)
+        else:
+            # 배경 없으면, 게임 영역만 검게
+            pygame.draw.rect(self.screen, BLACK, PLAY_AREA_RECT)
 
-        # 4. 현재 게임 상태에 맞는 화면 그리기 (게임 요소, UI 등)
+        # 3. 게임 상태에 맞게 그리기
         if self.game_state == "START":
             self.draw_start_screen()
         elif self.game_state == "PLAYING":
@@ -191,28 +163,35 @@ class Game:
         pygame.display.flip()
 
     def draw_start_screen(self):
-        # 시작 화면 요소들을 화면 중앙에 배치
+        # [수정] 시작 화면 요소들을 '게임 영역(PLAY_AREA_RECT)' 중앙에 배치
         title_text = FONT_LARGE.render("WordShot", True, WHITE)
-        title_rect = title_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 100))
+        title_rect = title_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery - 40))
         self.screen.blit(title_text, title_rect)
 
-        self.start_button_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 50, 200, 50)
+        # [수정] 버튼 크기 및 위치 조절
+        self.start_button_rect = pygame.Rect(0, 0, 150, 40)  # 200x50 -> 150x40
+        self.start_button_rect.center = (PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery + 30)
+
         pygame.draw.rect(self.screen, MINT, self.start_button_rect)
         start_text = FONT_MEDIUM.render("게임 시작", True, WHITE)
         start_text_rect = start_text.get_rect(center=self.start_button_rect.center)
         self.screen.blit(start_text, start_text_rect)
 
     def draw_playing_screen(self):
-        # 게임 요소들 그리기
+        # --- 게임 요소 그리기 (PLAY_AREA_RECT 안에서) ---
         self.player.draw(self.screen)
+
+        # [수정] 총알/적이 PLAY_AREA_RECT와 겹칠 때만 그리기
         for bullet in self.bullets:
-            bullet.draw(self.screen)
+            if bullet.rect.colliderect(PLAY_AREA_RECT):
+                bullet.draw(self.screen)
         for enemy in self.enemies:
-            enemy.draw(self.screen)
+            if enemy.rect.colliderect(PLAY_AREA_RECT):
+                enemy.draw(self.screen)
 
-        # --- UI 그리기 (settings.py에서 정의한 새 위치) ---
+        # --- [수정] UI 그리기 (settings.py에서 정의한 PLAY_AREA_RECT 기준) ---
 
-        # 사자성어와 뜻 (화면 하단 중앙)
+        # 사자성어와 뜻 (settings.py의 SAJA_WORD_POS, SAJA_MEANING_POS 사용)
         saja_text = FONT_MEDIUM.render(self.current_saja['word'], True, WHITE)
         saja_rect = saja_text.get_rect(center=SAJA_WORD_POS)
         self.screen.blit(saja_text, saja_rect)
@@ -221,56 +200,68 @@ class Game:
         meaning_rect = meaning_text.get_rect(center=SAJA_MEANING_POS)
         self.screen.blit(meaning_text, meaning_rect)
 
-        # 입력창 (화면 하단 중앙)
+        # [수정] 입력창 (PLAY_AREA_RECT 중앙 하단 기준)
         input_text = FONT_MEDIUM.render(self.user_input, True, PASTEL_YELLOW)
-        underline_width = max(100, input_text.get_width() + 20)  # 최소 너비 보장
-        underline_pos_start = (SCREEN_WIDTH // 2 - underline_width // 2, INPUT_BOX_Y + 5)
-        underline_pos_end = (SCREEN_WIDTH // 2 + underline_width // 2, INPUT_BOX_Y + 5)
+        underline_width = max(100, input_text.get_width() + 10)  # 20->10
+
+        # X 위치: settings.py의 UI_CENTER_X (PLAY_AREA_RECT.centerx) 사용
+        underline_pos_start = (UI_CENTER_X - underline_width // 2, INPUT_BOX_Y + 5)
+        underline_pos_end = (UI_CENTER_X + underline_width // 2, INPUT_BOX_Y + 5)
         pygame.draw.line(self.screen, PASTEL_YELLOW, underline_pos_start, underline_pos_end, 2)
 
-        input_rect = input_text.get_rect(midbottom=(SCREEN_WIDTH // 2, INPUT_BOX_Y))
+        # Y 위치: settings.py의 INPUT_BOX_Y 사용
+        input_rect = input_text.get_rect(midbottom=(UI_CENTER_X, INPUT_BOX_Y))
         self.screen.blit(input_text, input_rect)
 
-        # 점수 (화면 상단)
+        # 점수 (settings.py의 SCORE_POS 사용)
         score_text = FONT_GUI.render(f"{self.score}", True, WHITE)
         score_rect = score_text.get_rect(center=SCORE_POS)
         self.screen.blit(score_text, score_rect)
 
-        # 목숨 (화면 상단)
+        # 목숨 (settings.py의 LIVES_POS 사용)
         lives_text = FONT_GUI.render(f"LIVES: {self.lives}", True, WHITE)
         lives_rect = lives_text.get_rect(center=LIVES_POS)
         self.screen.blit(lives_text, lives_rect)
 
     def draw_game_over_screen(self):
-        # 게임 오버 화면 요소들을 화면 중앙에 배치
+        # [수정] 게임 오버 화면 요소들을 '게임 영역(PLAY_AREA_RECT)' 중앙에 배치
         game_over_text = FONT_LARGE.render("게임 오버", True, PASTEL_PINK)
-        game_over_rect = game_over_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 200))
+        game_over_rect = game_over_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.top + 40))
         self.screen.blit(game_over_text, game_over_rect)
 
         final_score_text = FONT_MEDIUM.render(f"최종 점수: {self.score}", True, WHITE)
-        final_score_rect = final_score_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 100))
+        final_score_rect = final_score_text.get_rect(center=(PLAY_AREA_RECT.centerx, game_over_rect.bottom + 30))
         self.screen.blit(final_score_text, final_score_rect)
 
         correct_list_text = FONT_SMALL.render("맞춘 사자성어:", True, PASTEL_YELLOW)
-        correct_list_rect = correct_list_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+        correct_list_rect = correct_list_text.get_rect(center=(PLAY_AREA_RECT.centerx, final_score_rect.bottom + 30))
         self.screen.blit(correct_list_text, correct_list_rect)
 
-        start_x = 30 # 화면 왼쪽 여백
+        # [수정] 맞춘 사자성어 목록 나열 (PLAY_AREA_RECT 기준)
+        start_x = PLAY_AREA_RECT.left + 10  # 게임 영역 왼쪽 여백
         current_x = start_x
-        current_y = correct_list_rect.bottom + 20
+        current_y = correct_list_rect.bottom + 10
         for i, word in enumerate(self.correct_saja_list):
             word_text = FONT_SMALL.render(word, True, WHITE)
             word_rect = word_text.get_rect(topleft=(current_x, current_y))
 
-            if word_rect.right > SCREEN_WIDTH - 30: # 화면 오른쪽 여백
-                current_y += word_rect.height + 5
+            # [수정] 줄바꿈 기준을 PLAY_AREA_RECT.right로
+            if word_rect.right > PLAY_AREA_RECT.right - 10:  # 게임 영역 오른쪽 여백
+                current_y += word_rect.height + 3  # 줄 간격
                 current_x = start_x
                 word_rect.topleft = (current_x, current_y)
 
-            self.screen.blit(word_text, word_rect)
-            current_x = word_rect.right + 15
+            # [수정] Y좌표가 버튼을 침범하지 않게
+            if word_rect.bottom > PLAY_AREA_RECT.bottom - 50:
+                break  # 너무 길면 그만 그림
 
-        self.restart_button_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT - 100, 200, 50)
+            self.screen.blit(word_text, word_rect)
+            current_x = word_rect.right + 10  # 단어 사이 간격
+
+        # [수정] '처음으로' 버튼 (PLAY_AREA_RECT 하단)
+        self.restart_button_rect = pygame.Rect(0, 0, 150, 40)  # 200x50 -> 150x40
+        self.restart_button_rect.center = (PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.bottom - 25)
+
         pygame.draw.rect(self.screen, MINT, self.restart_button_rect)
         restart_text = FONT_MEDIUM.render("처음으로", True, WHITE)
         restart_text_rect = restart_text.get_rect(center=self.restart_button_rect.center)
