@@ -39,13 +39,10 @@ class Explosion(pygame.sprite.Sprite):
 
 
 class Game:
+    # (__init__ 메서드는 수정 없음)
     def __init__(self):
         pygame.init()
-
-        # --- [새로 추가] 사운드 믹서 초기화 ---
         pygame.mixer.init()
-        # ----------------------------------
-
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.screen_rect = self.screen.get_rect()
 
@@ -57,7 +54,6 @@ class Game:
             print("경고: 'img/background.png' 파일을 찾을 수 없습니다.")
             self.game_background_image = None
 
-        # (이미지 로드... 수정 없음)
         self.logo_image = None
         self.start_button_image = None
         try:
@@ -97,7 +93,6 @@ class Game:
         self.running = True
         self.game_state = "START"
 
-        # (idioms.json 로드... 수정 없음)
         try:
             with open('idioms.json', 'r', encoding='utf-8') as f:
                 self.saja_list = json.load(f)
@@ -123,16 +118,13 @@ class Game:
         self.player = Player(PLAY_AREA_RECT)
         self.reset_game_variables()
 
-        # --- [새로 추가] 사운드 파일 로드 ---
-
-        # 1. 배경음악 (BGM)
+        # (사운드 로드... 수정 없음)
         try:
             pygame.mixer.music.load("sound/bgm.mp3")
-            pygame.mixer.music.play(-1)  # -1: 무한 반복
+            pygame.mixer.music.play(-1)
         except pygame.error as e:
             print(f"경고: 'sound/bgm.mp3' 로드 실패. ({e})")
 
-        # 2. 효과음
         self.sound_enemy_hit = None
         self.sound_heart_get = None
         self.sound_death = None
@@ -151,8 +143,8 @@ class Game:
             self.sound_death = pygame.mixer.Sound("sound/death.mp3")
         except pygame.error as e:
             print(f"경고: 'sound/death.mp3' 로드 실패. ({e})")
-        # --- [사운드 로드 완료] ---
 
+    # (reset_game_variables 메서드는 수정 없음)
     def reset_game_variables(self):
         self.player.reset(PLAY_AREA_RECT)
         self.bullets = []
@@ -174,6 +166,7 @@ class Game:
 
         self.scroll_y = 0
 
+    # (run 메서드는 수정 없음)
     def run(self):
         while self.running:
             self.handle_events()
@@ -182,6 +175,7 @@ class Game:
             self.clock.tick(60)
         pygame.quit()
 
+    # (handle_events 메서드는 수정 없음)
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -217,6 +211,7 @@ class Game:
                 if self.scroll_y > 0:
                     self.scroll_y = 0
 
+    # (handle_playing_keydown 메서드는 수정 없음)
     def handle_playing_keydown(self, event):
         if event.key == pygame.K_BACKSPACE:
             self.user_input = self.user_input[:-1]
@@ -245,7 +240,7 @@ class Game:
             if bullet.rect.bottom < PLAY_AREA_RECT.top:
                 self.bullets.remove(bullet)
 
-        # 50점 단위로 적 '등장 간격' 설정
+        # (난이도 설정... 수정 없음)
         if self.score >= 200:
             self.enemy_spawn_interval = 1.5
         elif self.score >= 150:
@@ -261,7 +256,6 @@ class Game:
 
         if current_time - self.last_enemy_spawn_time > self.enemy_spawn_interval:
             self.enemies.append(Enemy(PLAY_AREA_RECT, self.score))
-
             self.last_enemy_spawn_time = current_time
 
         if current_time - self.last_heart_spawn_time > self.heart_spawn_interval:
@@ -269,17 +263,16 @@ class Game:
             self.last_heart_spawn_time = current_time
             self.heart_spawn_interval = random.uniform(10.0, 20.0)
 
+        # (적 패널티... 수정 없음)
         for enemy in self.enemies:
             enemy.update()
             if enemy.rect.top > PLAY_AREA_RECT.bottom:
                 self.enemies.remove(enemy)
                 self.lives -= 1
-
-                # --- [새로 추가] 목숨 잃을 때 사운드 (death.mp3) ---
                 if self.sound_death:
                     self.sound_death.play()
-                # ---------------------------------------------
 
+        # (하트 이동... 수정 없음)
         for heart in self.hearts[::]:
             heart.update()
             if heart.rect.top > PLAY_AREA_RECT.bottom:
@@ -293,22 +286,11 @@ class Game:
         enemies_to_remove = []
         hearts_to_remove = []
 
-        for bullet in self.bullets:
-            if bullet in bullets_to_remove: continue
-            for heart in self.hearts:
-                if heart in hearts_to_remove: continue
-                if bullet.rect.colliderect(heart.rect):
-                    bullets_to_remove.append(bullet)
-                    hearts_to_remove.append(heart)
-                    if self.lives < 3:
-                        self.lives += 1
+        # --- [수정] '총알-하트' 충돌 로직 '삭제' ---
+        # (기존에 있던 for bullet in self.bullets: ... for heart in self.hearts: ... 블록이 삭제되었습니다)
+        # ----------------------------------------
 
-                        # --- [새로 추가] 하트 얻을 때 사운드 (heart.mp3) ---
-                        if self.sound_heart_get:
-                            self.sound_heart_get.play()
-                        # -----------------------------------------------
-                    break
-
+        # [유지] '총알-적' 충돌 감지
         for bullet in self.bullets:
             if bullet in bullets_to_remove: continue
             for enemy in self.enemies:
@@ -319,12 +301,24 @@ class Game:
                     self.explosions.append(Explosion(enemy.rect.center))
                     self.score += 10
 
-                    # --- [새로 추가] 적 맞출 때 사운드 (enemy.mp3) ---
                     if self.sound_enemy_hit:
                         self.sound_enemy_hit.play()
-                    # ---------------------------------------------
                     break
 
+        # --- [새로 추가] '플레이어-하트' 충돌 감지 ---
+        for heart in self.hearts:
+            if heart in hearts_to_remove: continue
+            # 플레이어(self.player)와 하트(heart)가 충돌했는지 검사
+            if self.player.rect.colliderect(heart.rect):
+                hearts_to_remove.append(heart)  # 하트 제거 목록에 추가
+                if self.lives < 3:
+                    self.lives += 1
+                    if self.sound_heart_get:
+                        self.sound_heart_get.play()
+                # (총알은 제거할 필요 없음)
+        # --- [추가 완료] ---
+
+        # [유지] 스프라이트 제거
         for bullet in list(set(bullets_to_remove)):
             self.bullets.remove(bullet)
         for heart in list(set(hearts_to_remove)):
@@ -336,6 +330,7 @@ class Game:
             if not explosion.update():
                 self.explosions.remove(explosion)
 
+    # (draw_main_ui 메서드는 수정 없음)
     def draw_main_ui(self):
         score_text = FONT_GUI.render(f"{self.score}", True, DEEP_PINK)
         score_rect = score_text.get_rect(center=SCORE_POS)
@@ -356,6 +351,7 @@ class Game:
             lives_rect = lives_text.get_rect(center=LIVES_POS)
             self.screen.blit(lives_text, lives_rect)
 
+    # (draw 메서드는 수정 없음)
     def draw(self):
         self.screen.fill(BLACK)
         if self.game_background_image:
@@ -376,6 +372,7 @@ class Game:
 
         pygame.display.flip()
 
+    # (draw_start_screen 메서드는 수정 없음)
     def draw_start_screen(self):
         if self.logo_image:
             logo_rect = self.logo_image.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery - 40))
@@ -393,6 +390,7 @@ class Game:
             start_text_rect = start_text.get_rect(center=self.start_button_rect.center)
             self.screen.blit(start_text, start_text_rect)
 
+    # (draw_playing_screen 메서드는 수정 없음)
     def draw_playing_screen(self):
         self.player.draw(self.screen)
         for bullet in self.bullets:
@@ -402,7 +400,6 @@ class Game:
             if enemy.rect.colliderect(PLAY_AREA_RECT):
                 enemy.draw(self.screen)
 
-        # (오타 수정 부분 - colliderect)
         for heart in self.hearts:
             if heart.rect.colliderect(PLAY_AREA_RECT):
                 heart.draw(self.screen)
@@ -426,6 +423,7 @@ class Game:
         input_rect = input_text.get_rect(midbottom=(UI_CENTER_X, INPUT_BOX_Y))
         self.screen.blit(input_text, input_rect)
 
+    # (draw_game_over_screen 메서드는 수정 없음)
     def draw_game_over_screen(self):
         game_over_text = FONT_LARGE.render("게임 오버", True, PASTEL_PINK)
         game_over_rect = game_over_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.top + 40))
