@@ -73,7 +73,7 @@ class Game:
 
         if self.start_button_image:
             self.start_button_rect = self.start_button_image.get_rect(
-                center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery + 30)
+                center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery + 80)
             )
         else:
             self.start_button_rect = pygame.Rect(0, 0, 150, 40)

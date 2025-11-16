@@ -35,7 +35,7 @@ class Player(pygame.sprite.Sprite):
         #
         # [수정] Y 위치: 5픽셀 틈 제거, 맨 밑으로
         #
-        self.rect.bottom = self.play_area_rect.bottom
+        self.rect.bottom = self.play_area_rect.bottom + 15
         # (기존 코드: self.play_area_rect.bottom - 5)
 
     def update(self):
