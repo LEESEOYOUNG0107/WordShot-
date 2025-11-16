@@ -1,7 +1,7 @@
 import pygame
 import random
 import time
-import json  # [새로 추가] json 모듈 임포트
+import json
 from settings import *
 from player import Player
 from enemy import Enemy
@@ -39,6 +39,7 @@ class Explosion(pygame.sprite.Sprite):
 
 
 class Game:
+    # (__init__ 메서드는 수정 없음)
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -52,7 +53,7 @@ class Game:
             print("경고: 'img/background.png' 파일을 찾을 수 없습니다.")
             self.game_background_image = None
 
-        # --- 시작 화면 이미지 로드 (수정 없음) ---
+        # (이미지 로드... 수정 없음)
         self.logo_image = None
         self.start_button_image = None
         try:
@@ -73,17 +74,16 @@ class Game:
 
         if self.start_button_image:
             self.start_button_rect = self.start_button_image.get_rect(
-                center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery + 80)
+                center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery + 30)
             )
         else:
             self.start_button_rect = pygame.Rect(0, 0, 150, 40)
             self.start_button_rect.center = (PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery + 30)
 
-        # --- 목숨(UI)용 하트 이미지 로드 (수정 없음) ---
         self.heart_ui_image = None
         try:
             self.heart_ui_image = pygame.image.load("img/heart.png").convert_alpha()
-            self.heart_ui_image = pygame.transform.scale(self.heart_ui_image, (20, 20))  # UI용은 20x20
+            self.heart_ui_image = pygame.transform.scale(self.heart_ui_image, (20, 20))
         except FileNotFoundError:
             print("경고: 'img/heart.png' (UI용) 파일을 찾을 수 없습니다. 텍스트로 대체합니다.")
 
@@ -93,23 +93,19 @@ class Game:
         self.running = True
         self.game_state = "START"
 
-        # --- [수정] idioms.json 파일에서 사자성어 목록 불러오기 ---
+        # (idioms.json 로드... 수정 없음)
         try:
-            # 'utf-8' 인코딩을 명시하여 한글 파일 읽기
             with open('idioms.json', 'r', encoding='utf-8') as f:
                 self.saja_list = json.load(f)
 
-            # 파일은 있으나 내용이 비어있는 경우 예외 처리
             if not self.saja_list:
                 print("경고: 'idioms.json' 파일이 비어있습니다. 기본 목록을 사용합니다.")
-                raise FileNotFoundError  # 기본 목록을 사용하도록 예외 발생
+                raise FileNotFoundError
 
             print(f"성공: 'idioms.json'에서 {len(self.saja_list)}개의 사자성어를 불러왔습니다.")
 
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            # 파일이 없거나, json 형식이 아닐 경우 (예: 비어있음)
             print(f"경고: 'idioms.json' 파일 로드 실패 ({e}). 기본 목록을 사용합니다.")
-            # 예비용 기본 목록 (Fallback)
             self.saja_list = [
                 {"word": "고진감래", "meaning": "고생 끝에 낙이 온다"},
                 {"word": "동고동락", "meaning": "고통과 즐거움을 함께 한다"},
@@ -119,7 +115,6 @@ class Game:
                 {"word": "일석이조", "meaning": "한 가지 일로 두 가지 이익을 얻음"},
                 {"word": "자화자찬", "meaning": "자기가 한 일을 스스로 칭찬함"},
             ]
-        # --- [수정 완료] ---
 
         self.player = Player(PLAY_AREA_RECT)
         self.reset_game_variables()
@@ -137,12 +132,16 @@ class Game:
         self.correct_saja_list = []
         self.lives = 3
         self.last_enemy_spawn_time = time.time()
-        self.enemy_spawn_interval = 4.0
+
+        # [유지] Level 1 초기 스폰 간격 (5.0초)
+        self.enemy_spawn_interval = 5.0
+
         self.last_heart_spawn_time = time.time()
         self.heart_spawn_interval = random.uniform(10.0, 20.0)
 
-        self.scroll_y = 0  # [새로 추가] 스크롤 Y 위치 변수
+        self.scroll_y = 0
 
+    # (run 메서드는 수정 없음)
     def run(self):
         while self.running:
             self.handle_events()
@@ -151,7 +150,7 @@ class Game:
             self.clock.tick(60)
         pygame.quit()
 
-    # --- [수정] handle_events ---
+    # (handle_events 메서드는 수정 없음)
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -172,27 +171,22 @@ class Game:
                     pygame.key.start_text_input()
 
             elif self.game_state == "GAME_OVER":
-                # '처음으로' 버튼 클릭
                 if hasattr(self,
                            'restart_button_rect') and event.type == pygame.MOUSEBUTTONDOWN and self.restart_button_rect.collidepoint(
                     event.pos):
                     self.game_state = "START"
                     pygame.key.stop_text_input()
 
-                # [새로 추가] 마우스 휠 스크롤 감지
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 4:  # 휠 위로
-                        self.scroll_y += 20  # 20픽셀씩 위로 (내용이 아래로)
-                    elif event.button == 5:  # 휠 아래로
-                        self.scroll_y -= 20  # 20픽셀씩 아래로 (내용이 위로)
+                    if event.button == 4:
+                        self.scroll_y += 20
+                    elif event.button == 5:
+                        self.scroll_y -= 20
 
-                # [새로 추가] 스크롤 범위 제한 (0보다 위로 못 올라가게)
                 if self.scroll_y > 0:
                     self.scroll_y = 0
-                # (참고: 목록 맨 아래까지의 최대 스크롤 제한은 복잡해서 일단 생략했습니다)
 
-    # ----------------------------
-
+    # (handle_playing_keydown 메서드는 수정 없음)
     def handle_playing_keydown(self, event):
         if event.key == pygame.K_BACKSPACE:
             self.user_input = self.user_input[:-1]
@@ -201,7 +195,6 @@ class Game:
                 player_pos = self.player.get_pos()
                 self.bullets.append(Bullet(player_pos[0], player_pos[1]))
 
-                # [수정 없음] 사자성어 딕셔너리 저장
                 if self.current_saja not in self.correct_saja_list:
                     self.correct_saja_list.append(self.current_saja)
 
@@ -215,7 +208,6 @@ class Game:
         if self.game_state != "PLAYING":
             return
 
-        # (이하 update 로직은 수정 없음)
         self.player.update()
 
         for bullet in self.bullets:
@@ -223,17 +215,28 @@ class Game:
             if bullet.rect.bottom < PLAY_AREA_RECT.top:
                 self.bullets.remove(bullet)
 
+        # --- [수정] 50점 단위로 적 '등장 간격' 설정 ---
+        if self.score >= 200:
+            self.enemy_spawn_interval = 1.5  # Level 5 (1.5초)
+        elif self.score >= 150:
+            self.enemy_spawn_interval = 2.0  # Level 4 (2.0초)
+        elif self.score >= 100:
+            self.enemy_spawn_interval = 2.5  # Level 3 (2.5초)
+        elif self.score >= 50:
+            self.enemy_spawn_interval = 3.5  # Level 2 (3.5초)
+        else:
+            self.enemy_spawn_interval = 5.0  # Level 1 (5.0초)
+        # --- [수정 완료] ---
+
         current_time = time.time()
 
         if current_time - self.last_enemy_spawn_time > self.enemy_spawn_interval:
-            self.enemies.append(Enemy(PLAY_AREA_RECT))
-            self.last_enemy_spawn_time = current_time
-            if self.score > 50 and self.enemy_spawn_interval > 2.0:
-                self.enemy_spawn_interval -= 0.1
-            elif self.score > 100 and self.enemy_spawn_interval > 1.5:
-                self.enemy_spawn_interval -= 0.1
-            self.enemy_spawn_interval = max(self.enemy_spawn_interval, 1.0)
+            # [유지] 적 생성 시 self.score 전달 (수정 없음)
+            self.enemies.append(Enemy(PLAY_AREA_RECT, self.score))
 
+            self.last_enemy_spawn_time = current_time
+
+        # (이하 하트 스폰, 충돌 감지 등은 수정 없음)
         if current_time - self.last_heart_spawn_time > self.heart_spawn_interval:
             self.hearts.append(Heart(PLAY_AREA_RECT))
             self.last_heart_spawn_time = current_time
@@ -291,6 +294,7 @@ class Game:
             if not explosion.update():
                 self.explosions.remove(explosion)
 
+    # (draw_main_ui 메서드는 수정 없음)
     def draw_main_ui(self):
         score_text = FONT_GUI.render(f"{self.score}", True, DEEP_PINK)
         score_rect = score_text.get_rect(center=SCORE_POS)
@@ -311,6 +315,7 @@ class Game:
             lives_rect = lives_text.get_rect(center=LIVES_POS)
             self.screen.blit(lives_text, lives_rect)
 
+    # (draw 메서드는 수정 없음)
     def draw(self):
         self.screen.fill(BLACK)
         if self.game_background_image:
@@ -331,6 +336,7 @@ class Game:
 
         pygame.display.flip()
 
+    # (draw_start_screen 메서드는 수정 없음)
     def draw_start_screen(self):
         if self.logo_image:
             logo_rect = self.logo_image.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery - 40))
@@ -348,6 +354,7 @@ class Game:
             start_text_rect = start_text.get_rect(center=self.start_button_rect.center)
             self.screen.blit(start_text, start_text_rect)
 
+    # (draw_playing_screen 메서드는 수정 없음)
     def draw_playing_screen(self):
         self.player.draw(self.screen)
         for bullet in self.bullets:
@@ -378,9 +385,8 @@ class Game:
         input_rect = input_text.get_rect(midbottom=(UI_CENTER_X, INPUT_BOX_Y))
         self.screen.blit(input_text, input_rect)
 
-    # --- [수정] draw_game_over_screen ---
+    # (draw_game_over_screen 메서드는 수정 없음)
     def draw_game_over_screen(self):
-        # 1. "게임 오버", "최종 점수", "맞춘 사자성어" 타이틀 그리기 (수정 없음)
         game_over_text = FONT_LARGE.render("게임 오버", True, PASTEL_PINK)
         game_over_rect = game_over_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.top + 40))
         self.screen.blit(game_over_text, game_over_rect)
@@ -393,29 +399,19 @@ class Game:
         correct_list_rect = correct_list_text.get_rect(center=(PLAY_AREA_RECT.centerx, final_score_rect.bottom + 30))
         self.screen.blit(correct_list_text, correct_list_rect)
 
-        # 2. [새로 추가] '처음으로' 버튼 Rect 먼저 정의 (스크롤 영역 계산용)
         self.restart_button_rect = pygame.Rect(0, 0, 150, 40)
         self.restart_button_rect.center = (PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.bottom - 25)
 
-        # 3. [새로 추가] 스크롤 목록이 그려질 영역(clip_rect) 정의
-        # "맞춘 사자성어" 텍스트 10픽셀 아래부터
         list_area_top = correct_list_rect.bottom + 10
-        # '처음으로' 버튼 10픽셀 위까지
         list_area_bottom = self.restart_button_rect.top - 10
-        # Rect(x, y, width, height)
         clip_rect = pygame.Rect(
             PLAY_AREA_RECT.left, list_area_top,
             PLAY_AREA_RECT.width, list_area_bottom - list_area_top
         )
 
-        # 4. [새로 추가] 화면 잘라내기(clipping) 설정
-        # 이 코드 이후 .blit()은 clip_rect 안쪽에만 그려집니다.
         self.screen.set_clip(clip_rect)
 
-        # --- [수정] 맞춘 사자성어 목록 (스크롤 적용) ---
-
         start_x = PLAY_AREA_RECT.left + 10
-        # [수정] current_y가 스크롤 위치(self.scroll_y)를 반영하도록
         current_y = list_area_top + self.scroll_y
         max_width = PLAY_AREA_RECT.width - 20
 
@@ -423,15 +419,11 @@ class Game:
         padding_between_entries = 5
 
         for saja_dict in self.correct_saja_list:
-
-            # (이하 그리기 로직은 수정 없음)
-            # 1. 단어 그리기 (DEEP_PINK)
             word_text = FONT_SMALL.render(saja_dict['word'], True, DEEP_PINK)
             word_rect = word_text.get_rect(topleft=(start_x, current_y))
             self.screen.blit(word_text, word_rect)
             current_y = word_rect.bottom + padding_between_lines
 
-            # 2. 뜻 그리기 (MEDIUM_GRAY) - 텍스트 자동 줄바꿈
             words = saja_dict['meaning'].split(' ')
             line = ""
             for word in words:
@@ -450,14 +442,8 @@ class Game:
             current_y += line_text.get_height()
             current_y += padding_between_entries
 
-            # [삭제] Y좌표가 버튼을 침범하는지 검사하는 'break'문 삭제
-            # (clipping 영역이 자동으로 잘라주므로 필요 없음)
-
-        # 5. [새로 추가] 화면 잘라내기(clipping) 해제
-        # 이 코드 이후 .blit()은 다시 화면 전체에 그려집니다.
         self.screen.set_clip(None)
 
-        # 6. '처음으로' 버튼 그리기 (clipping 해제 후)
         pygame.draw.rect(self.screen, MINT, self.restart_button_rect)
         restart_text = FONT_MEDIUM.render("처음으로", True, DEEP_PINK)
         restart_text_rect = restart_text.get_rect(center=self.restart_button_rect.center)
