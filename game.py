@@ -39,13 +39,13 @@ class Explosion(pygame.sprite.Sprite):
 
 
 class Game:
+    # (__init__ 메서드는 수정 없음)
     def __init__(self):
         pygame.init()
         pygame.mixer.init()
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.screen_rect = self.screen.get_rect()
 
-        # (이미지 로드... 수정 없음)
         try:
             self.game_background_image = pygame.image.load("img/background.png").convert_alpha()
             self.game_background_image = pygame.transform.scale(self.game_background_image,
@@ -93,7 +93,6 @@ class Game:
         self.running = True
         self.game_state = "START"
 
-        # (idioms.json 로드... 수정 없음)
         try:
             with open('idioms.json', 'r', encoding='utf-8') as f:
                 self.saja_list = json.load(f)
@@ -180,7 +179,7 @@ class Game:
             self.clock.tick(60)
         pygame.quit()
 
-    # (handle_events 메서드는 수정 없음)
+    # --- [수정] handle_events (게임 상태 분리) ---
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -200,14 +199,25 @@ class Game:
                     self.game_state = "PLAYING"
                     pygame.key.start_text_input()
 
-            elif self.game_state == "GAME_OVER":
+            # [새로 추가] 1단계: 게임 오버 (점수 요약)
+            elif self.game_state == "GAME_OVER_SUMMARY":
+                # '다음' 버튼 클릭 시
+                if hasattr(self,
+                           'next_button_rect') and event.type == pygame.MOUSEBUTTONDOWN and self.next_button_rect.collidepoint(
+                        event.pos):
+                    self.game_state = "IDIOM_LIST"  # 2단계로 이동
+                    self.scroll_y = 0  # 스크롤 위치 초기화
+
+            # [수정] 2단계: 사자성어 목록 (기존 GAME_OVER)
+            elif self.game_state == "IDIOM_LIST":
+                # '처음으로' 버튼 클릭 시
                 if hasattr(self,
                            'restart_button_rect') and event.type == pygame.MOUSEBUTTONDOWN and self.restart_button_rect.collidepoint(
-                    event.pos):
+                        event.pos):
                     self.game_state = "START"
                     pygame.key.stop_text_input()
 
-                # [유지] 마우스 휠 스크롤
+                # 마우스 휠 스크롤
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 4:
                         self.scroll_y += 20
@@ -243,7 +253,7 @@ class Game:
 
             self.user_input = ""
 
-    # (update 메서드는 수정 없음)
+    # --- [수정] update (게임 상태 변경) ---
     def update(self):
         if self.game_state != "PLAYING":
             return
@@ -255,6 +265,7 @@ class Game:
             if bullet.rect.bottom < PLAY_AREA_RECT.top:
                 self.bullets.remove(bullet)
 
+        # (난이도 설정... 수정 없음)
         if self.score >= 200:
             self.enemy_spawn_interval = 1.5
         elif self.score >= 150:
@@ -290,14 +301,17 @@ class Game:
             if heart.rect.top > PLAY_AREA_RECT.bottom:
                 self.hearts.remove(heart)
 
+        # --- [수정] 게임 오버 시 1단계(SUMMARY) 상태로 변경 ---
         if self.lives <= 0:
-            self.game_state = "GAME_OVER"
+            self.game_state = "GAME_OVER_SUMMARY"  # (기존 "GAME_OVER")
             pygame.key.stop_text_input()
+        # -----------------------------------------------
 
         bullets_to_remove = []
         enemies_to_remove = []
         hearts_to_remove = []
 
+        # ('총알-적' 충돌... 수정 없음)
         for bullet in self.bullets:
             if bullet in bullets_to_remove: continue
             for enemy in self.enemies:
@@ -312,6 +326,7 @@ class Game:
                         self.sound_enemy_hit.play()
                     break
 
+        # ('플레이어-하트' 충돌... 수정 없음)
         for heart in self.hearts:
             if heart in hearts_to_remove: continue
             if self.player.rect.colliderect(heart.rect):
@@ -321,6 +336,7 @@ class Game:
                     if self.sound_heart_get:
                         self.sound_heart_get.play()
 
+        # (스프라이트 제거... 수정 없음)
         for bullet in list(set(bullets_to_remove)):
             self.bullets.remove(bullet)
         for heart in list(set(hearts_to_remove)):
@@ -353,7 +369,7 @@ class Game:
             lives_rect = lives_text.get_rect(center=LIVES_POS)
             self.screen.blit(lives_text, lives_rect)
 
-    # (draw 메서드는 수정 없음)
+    # --- [수정] draw (게임 상태 분리) ---
     def draw(self):
         self.screen.fill(BLACK)
         if self.game_background_image:
@@ -368,9 +384,15 @@ class Game:
             self.draw_playing_screen()
             self.draw_main_ui()
 
-        elif self.game_state == "GAME_OVER":
-            self.draw_game_over_screen()
-            self.draw_main_ui()
+        # [새로 추가] 1단계: 점수 요약 화면
+        elif self.game_state == "GAME_OVER_SUMMARY":
+            self.draw_game_over_summary_screen()
+            self.draw_main_ui()  # (점수/목숨 UI는 그대로 표시)
+
+        # [수정] 2단계: 사자성어 목록 화면
+        elif self.game_state == "IDIOM_LIST":
+            self.draw_idiom_list_screen()
+            # (목록 화면에서는 점수/목숨 UI를 가리기 위해 호출 안 함)
 
         pygame.display.flip()
 
@@ -430,26 +452,45 @@ class Game:
         input_rect = input_text.get_rect(midbottom=(UI_CENTER_X, INPUT_BOX_Y))
         self.screen.blit(input_text, input_rect)
 
-    # --- [수정] '게임 오버' 화면 그리기 ---
-    def draw_game_over_screen(self):
-        # (기존: 타이틀, 점수, '맞춘 사자성어' 텍스트 - 수정 없음)
+    # --- [새로 추가] 1단계: '게임 오버 요약' 화면 그리기 ---
+    def draw_game_over_summary_screen(self):
+        # 1. "게임 오버" 타이틀 (중앙에 크게)
         game_over_text = FONT_LARGE.render("게임 오버", True, PASTEL_PINK)
-        game_over_rect = game_over_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.top + 40))
+        game_over_rect = game_over_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.top + 80))
         self.screen.blit(game_over_text, game_over_rect)
 
+        # 2. "최종 점수" (타이틀 아래)
         final_score_text = FONT_MEDIUM.render(f"최종 점수: {self.score}", True, DEEP_PINK)
-        final_score_rect = final_score_text.get_rect(center=(PLAY_AREA_RECT.centerx, game_over_rect.bottom + 30))
+        final_score_rect = final_score_text.get_rect(center=(PLAY_AREA_RECT.centerx, game_over_rect.bottom + 50))
         self.screen.blit(final_score_text, final_score_rect)
 
-        correct_list_text = FONT_SMALL.render("맞춘 사자성어:", True, PASTEL_YELLOW)
-        correct_list_rect = correct_list_text.get_rect(center=(PLAY_AREA_RECT.centerx, final_score_rect.bottom + 30))
-        self.screen.blit(correct_list_text, correct_list_rect)
+        # 3. "다음" 버튼 (하단)
+        self.next_button_rect = pygame.Rect(0, 0, 150, 40)
+        self.next_button_rect.center = (PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.bottom - 25)
 
-        # (기존: '처음으로' 버튼, 스크롤 영역 설정 - 수정 없음)
+        pygame.draw.rect(self.screen, MINT, self.next_button_rect, border_radius=5)
+        next_text = FONT_MEDIUM.render("다음", True, DEEP_PINK)
+        next_text_rect = next_text.get_rect(center=self.next_button_rect.center)
+        self.screen.blit(next_text, next_text_rect)
+
+    # --- [추가 완료] ---
+
+    # --- [수정] 2단계: '사자성어 목록' 화면 그리기 ---
+    # (기존 draw_game_over_screen 메서드의 이름을 바꾸고, 타이틀을 수정)
+    def draw_idiom_list_screen(self):
+        # 1. 타이틀 변경
+        title_text = FONT_LARGE.render("맞춘 사자성어", True, PASTEL_PINK)
+        title_rect = title_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.top + 40))
+        self.screen.blit(title_text, title_rect)
+
+        # [삭제] (최종 점수, '맞춘 사자성어' 텍스트는 1단계 화면으로 이동하여 삭제)
+
+        # 2. '처음으로' 버튼 (위치/정의는 그대로)
         self.restart_button_rect = pygame.Rect(0, 0, 150, 40)
         self.restart_button_rect.center = (PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.bottom - 25)
 
-        list_area_top = correct_list_rect.bottom + 10
+        # 3. 스크롤 영역 (list_area_top)을 타이틀 바로 밑으로 조정
+        list_area_top = title_rect.bottom + 10
         list_area_bottom = self.restart_button_rect.top - 10
         clip_rect = pygame.Rect(
             PLAY_AREA_RECT.left, list_area_top,
@@ -458,28 +499,24 @@ class Game:
 
         self.screen.set_clip(clip_rect)
 
-        # --- [새로 추가] 카드 레이아웃을 위한 변수 ---
+        # (카드 레이아웃 변수 - 수정 없음)
         start_x = PLAY_AREA_RECT.left + 10
         max_width = PLAY_AREA_RECT.width - 20
         current_y = list_area_top + self.scroll_y
 
-        card_padding = 5  # 카드 내부 여백
-        card_spacing = 8  # 카드와 카드 사이 간격
+        card_padding = 5
+        card_spacing = 8
         line_height_small = FONT_SMALL.get_height()
-        # --- [추가 완료] ---
 
-        # --- [수정] 목록을 '카드' 형태로 그리기 ---
+        # 4. 카드 목록 그리기 (로직 수정 없음)
         for saja_dict in self.correct_saja_list:
 
-            # --- 1. 그리기 전에, 먼저 카드의 전체 높이를 계산 ---
             word_text_surface = FONT_SMALL.render(saja_dict['word'], True, DEEP_PINK)
             word_height = word_text_surface.get_height()
 
-            # (뜻 텍스트 줄바꿈 미리 계산)
             meaning_lines_str = []
             words = saja_dict['meaning'].split(' ')
             line = ""
-            # (카드 내부 여백을 고려하여 최대 너비 계산)
             meaning_max_width = max_width - (card_padding * 2)
 
             for word in words:
@@ -490,46 +527,34 @@ class Game:
                     line = word + " "
                 else:
                     line = test_line
-            meaning_lines_str.append(line)  # 마지막 줄 추가
+            meaning_lines_str.append(line)
 
             meaning_block_height = len(meaning_lines_str) * line_height_small
-
-            # (최종 카드 높이)
             total_card_height = (card_padding * 3) + word_height + meaning_block_height
 
-            # --- 2. 카드 배경과 테두리 그리기 ---
             card_rect = pygame.Rect(start_x, current_y, max_width, total_card_height)
 
-            # (화면에 보이는 카드만 그리기 - 성능 향상 및 스크롤)
             if card_rect.bottom > list_area_top and card_rect.top < list_area_bottom:
-                # 배경 (연노랑)
                 pygame.draw.rect(self.screen, PASTEL_YELLOW, card_rect, border_radius=5)
-                # 테두리 (민트, 2px)
                 pygame.draw.rect(self.screen, MINT, card_rect, 2, border_radius=5)
 
-                # --- 3. 카드 내부에 텍스트 그리기 ---
                 text_y = current_y + card_padding
                 text_x = start_x + card_padding
 
-                # 단어 (DEEP_PINK)
                 self.screen.blit(word_text_surface, (text_x, text_y))
-                text_y += word_height + card_padding  # 단어 높이 + 여백
+                text_y += word_height + card_padding
 
-                # 뜻 (MEDIUM_GRAY)
                 for line_str in meaning_lines_str:
                     line_surface = FONT_SMALL.render(line_str, True, MEDIUM_GRAY)
                     self.screen.blit(line_surface, (text_x, text_y))
-                    text_y += line_height_small  # 한 줄 높이
+                    text_y += line_height_small
 
-            # --- 4. 다음 카드를 그릴 Y 위치 업데이트 ---
-            current_y += total_card_height + card_spacing  # 카드 높이 + 카드 간격
-
-        # --- [수정 완료] ---
+            current_y += total_card_height + card_spacing
 
         self.screen.set_clip(None)
 
-        # (기존: '처음으로' 버튼 그리기 - 수정 없음)
-        pygame.draw.rect(self.screen, MINT, self.restart_button_rect)
+        # 5. '처음으로' 버튼 그리기 (로직 수정 없음)
+        pygame.draw.rect(self.screen, MINT, self.restart_button_rect, border_radius=5)  # [수정] 테두리 둥글게
         restart_text = FONT_MEDIUM.render("처음으로", True, DEEP_PINK)
         restart_text_rect = restart_text.get_rect(center=self.restart_button_rect.center)
         self.screen.blit(restart_text, restart_text_rect)
