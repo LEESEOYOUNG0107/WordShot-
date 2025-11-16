@@ -74,7 +74,7 @@ class Game:
 
         if self.start_button_image:
             self.start_button_rect = self.start_button_image.get_rect(
-                center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery + 30)
+                center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery + 80)
             )
         else:
             self.start_button_rect = pygame.Rect(0, 0, 150, 40)
@@ -179,7 +179,7 @@ class Game:
             self.clock.tick(60)
         pygame.quit()
 
-    # --- [수정] handle_events (게임 상태 분리) ---
+    # (handle_events 메서드는 수정 없음)
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -199,25 +199,20 @@ class Game:
                     self.game_state = "PLAYING"
                     pygame.key.start_text_input()
 
-            # [새로 추가] 1단계: 게임 오버 (점수 요약)
             elif self.game_state == "GAME_OVER_SUMMARY":
-                # '다음' 버튼 클릭 시
                 if hasattr(self,
                            'next_button_rect') and event.type == pygame.MOUSEBUTTONDOWN and self.next_button_rect.collidepoint(
                         event.pos):
-                    self.game_state = "IDIOM_LIST"  # 2단계로 이동
-                    self.scroll_y = 0  # 스크롤 위치 초기화
+                    self.game_state = "IDIOM_LIST"
+                    self.scroll_y = 0
 
-            # [수정] 2단계: 사자성어 목록 (기존 GAME_OVER)
             elif self.game_state == "IDIOM_LIST":
-                # '처음으로' 버튼 클릭 시
                 if hasattr(self,
                            'restart_button_rect') and event.type == pygame.MOUSEBUTTONDOWN and self.restart_button_rect.collidepoint(
                         event.pos):
                     self.game_state = "START"
                     pygame.key.stop_text_input()
 
-                # 마우스 휠 스크롤
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 4:
                         self.scroll_y += 20
@@ -253,7 +248,7 @@ class Game:
 
             self.user_input = ""
 
-    # --- [수정] update (게임 상태 변경) ---
+    # (update 메서드는 수정 없음)
     def update(self):
         if self.game_state != "PLAYING":
             return
@@ -265,7 +260,6 @@ class Game:
             if bullet.rect.bottom < PLAY_AREA_RECT.top:
                 self.bullets.remove(bullet)
 
-        # (난이도 설정... 수정 없음)
         if self.score >= 200:
             self.enemy_spawn_interval = 1.5
         elif self.score >= 150:
@@ -301,17 +295,14 @@ class Game:
             if heart.rect.top > PLAY_AREA_RECT.bottom:
                 self.hearts.remove(heart)
 
-        # --- [수정] 게임 오버 시 1단계(SUMMARY) 상태로 변경 ---
         if self.lives <= 0:
-            self.game_state = "GAME_OVER_SUMMARY"  # (기존 "GAME_OVER")
+            self.game_state = "GAME_OVER_SUMMARY"
             pygame.key.stop_text_input()
-        # -----------------------------------------------
 
         bullets_to_remove = []
         enemies_to_remove = []
         hearts_to_remove = []
 
-        # ('총알-적' 충돌... 수정 없음)
         for bullet in self.bullets:
             if bullet in bullets_to_remove: continue
             for enemy in self.enemies:
@@ -326,7 +317,6 @@ class Game:
                         self.sound_enemy_hit.play()
                     break
 
-        # ('플레이어-하트' 충돌... 수정 없음)
         for heart in self.hearts:
             if heart in hearts_to_remove: continue
             if self.player.rect.colliderect(heart.rect):
@@ -336,7 +326,6 @@ class Game:
                     if self.sound_heart_get:
                         self.sound_heart_get.play()
 
-        # (스프라이트 제거... 수정 없음)
         for bullet in list(set(bullets_to_remove)):
             self.bullets.remove(bullet)
         for heart in list(set(hearts_to_remove)):
@@ -369,7 +358,7 @@ class Game:
             lives_rect = lives_text.get_rect(center=LIVES_POS)
             self.screen.blit(lives_text, lives_rect)
 
-    # --- [수정] draw (게임 상태 분리) ---
+    # (draw 메서드는 수정 없음)
     def draw(self):
         self.screen.fill(BLACK)
         if self.game_background_image:
@@ -384,15 +373,12 @@ class Game:
             self.draw_playing_screen()
             self.draw_main_ui()
 
-        # [새로 추가] 1단계: 점수 요약 화면
         elif self.game_state == "GAME_OVER_SUMMARY":
             self.draw_game_over_summary_screen()
-            self.draw_main_ui()  # (점수/목숨 UI는 그대로 표시)
+            self.draw_main_ui()
 
-        # [수정] 2단계: 사자성어 목록 화면
         elif self.game_state == "IDIOM_LIST":
             self.draw_idiom_list_screen()
-            # (목록 화면에서는 점수/목숨 UI를 가리기 위해 호출 안 함)
 
         pygame.display.flip()
 
@@ -402,6 +388,7 @@ class Game:
             logo_rect = self.logo_image.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery - 40))
             self.screen.blit(self.logo_image, logo_rect)
         else:
+            # [수정] (참고) 시작 화면 텍스트도 영어로 통일 (Start)
             title_text = FONT_LARGE.render("WordShot", True, DEEP_PINK)
             title_rect = title_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery - 40))
             self.screen.blit(title_text, title_rect)
@@ -410,7 +397,7 @@ class Game:
             self.screen.blit(self.start_button_image, self.start_button_rect)
         else:
             pygame.draw.rect(self.screen, MINT, self.start_button_rect)
-            start_text = FONT_MEDIUM.render("Start", True, DEEP_PINK)
+            start_text = FONT_MEDIUM.render("Start", True, DEEP_PINK)  # 이미 영어
             start_text_rect = start_text.get_rect(center=self.start_button_rect.center)
             self.screen.blit(start_text, start_text_rect)
 
@@ -452,44 +439,53 @@ class Game:
         input_rect = input_text.get_rect(midbottom=(UI_CENTER_X, INPUT_BOX_Y))
         self.screen.blit(input_text, input_rect)
 
-    # --- [새로 추가] 1단계: '게임 오버 요약' 화면 그리기 ---
+    # --- [수정] '게임 오버 요약' 화면 (영어 & 디자인) ---
     def draw_game_over_summary_screen(self):
-        # 1. "게임 오버" 타이틀 (중앙에 크게)
-        game_over_text = FONT_LARGE.render("게임 오버", True, PASTEL_PINK)
-        game_over_rect = game_over_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.top + 80))
+
+        # 1. [새 디자인] 요약 패널(카드) 그리기
+        panel_width = PLAY_AREA_RECT.width * 0.9
+        panel_height = PLAY_AREA_RECT.height * 0.5
+        panel_rect = pygame.Rect(0, 0, panel_width, panel_height)
+        panel_rect.center = PLAY_AREA_RECT.center
+
+        # 패널 배경 (연노랑)
+        pygame.draw.rect(self.screen, PASTEL_YELLOW, panel_rect, border_radius=10)
+        # 패널 테두리 (민트)
+        pygame.draw.rect(self.screen, MINT, panel_rect, 3, border_radius=10)
+
+        # 2. "GAME OVER" 타이틀 (패널 안에)
+        game_over_text = FONT_LARGE.render("GAME OVER", True, PASTEL_PINK)
+        game_over_rect = game_over_text.get_rect(center=(panel_rect.centerx, panel_rect.top + 50))
         self.screen.blit(game_over_text, game_over_rect)
 
-        # 2. "최종 점수" (타이틀 아래)
-        final_score_text = FONT_MEDIUM.render(f"최종 점수: {self.score}", True, DEEP_PINK)
-        final_score_rect = final_score_text.get_rect(center=(PLAY_AREA_RECT.centerx, game_over_rect.bottom + 50))
+        # 3. "FINAL SCORE" (패널 안에)
+        final_score_text = FONT_MEDIUM.render(f"FINAL SCORE: {self.score}", True, DEEP_PINK)
+        final_score_rect = final_score_text.get_rect(center=(panel_rect.centerx, game_over_rect.bottom + 40))
         self.screen.blit(final_score_text, final_score_rect)
 
-        # 3. "다음" 버튼 (하단)
+        # 4. "NEXT" 버튼 (화면 하단)
         self.next_button_rect = pygame.Rect(0, 0, 150, 40)
         self.next_button_rect.center = (PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.bottom - 25)
 
         pygame.draw.rect(self.screen, MINT, self.next_button_rect, border_radius=5)
-        next_text = FONT_MEDIUM.render("다음", True, DEEP_PINK)
+        next_text = FONT_MEDIUM.render("NEXT", True, DEEP_PINK)  # 영어
         next_text_rect = next_text.get_rect(center=self.next_button_rect.center)
         self.screen.blit(next_text, next_text_rect)
 
-    # --- [추가 완료] ---
+    # --- [수정 완료] ---
 
-    # --- [수정] 2단계: '사자성어 목록' 화면 그리기 ---
-    # (기존 draw_game_over_screen 메서드의 이름을 바꾸고, 타이틀을 수정)
+    # --- [수정] '사자성어 목록' 화면 (영어) ---
     def draw_idiom_list_screen(self):
-        # 1. 타이틀 변경
-        title_text = FONT_LARGE.render("맞춘 사자성어", True, PASTEL_PINK)
+        # 1. 타이틀 (영어)
+        title_text = FONT_LARGE.render("MY IDIOM LIST", True, PASTEL_PINK)
         title_rect = title_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.top + 40))
         self.screen.blit(title_text, title_rect)
 
-        # [삭제] (최종 점수, '맞춘 사자성어' 텍스트는 1단계 화면으로 이동하여 삭제)
-
-        # 2. '처음으로' 버튼 (위치/정의는 그대로)
+        # 2. 'RESTART' 버튼 (영어)
         self.restart_button_rect = pygame.Rect(0, 0, 150, 40)
         self.restart_button_rect.center = (PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.bottom - 25)
 
-        # 3. 스크롤 영역 (list_area_top)을 타이틀 바로 밑으로 조정
+        # 3. 스크롤 영역 (수정 없음)
         list_area_top = title_rect.bottom + 10
         list_area_bottom = self.restart_button_rect.top - 10
         clip_rect = pygame.Rect(
@@ -499,7 +495,7 @@ class Game:
 
         self.screen.set_clip(clip_rect)
 
-        # (카드 레이아웃 변수 - 수정 없음)
+        # 4. 카드 레이아웃 변수 (수정 없음)
         start_x = PLAY_AREA_RECT.left + 10
         max_width = PLAY_AREA_RECT.width - 20
         current_y = list_area_top + self.scroll_y
@@ -508,7 +504,7 @@ class Game:
         card_spacing = 8
         line_height_small = FONT_SMALL.get_height()
 
-        # 4. 카드 목록 그리기 (로직 수정 없음)
+        # 5. 카드 목록 그리기 (로직 수정 없음)
         for saja_dict in self.correct_saja_list:
 
             word_text_surface = FONT_SMALL.render(saja_dict['word'], True, DEEP_PINK)
@@ -553,8 +549,9 @@ class Game:
 
         self.screen.set_clip(None)
 
-        # 5. '처음으로' 버튼 그리기 (로직 수정 없음)
-        pygame.draw.rect(self.screen, MINT, self.restart_button_rect, border_radius=5)  # [수정] 테두리 둥글게
-        restart_text = FONT_MEDIUM.render("처음으로", True, DEEP_PINK)
+        # 6. 'RESTART' 버튼 그리기 (영어)
+        pygame.draw.rect(self.screen, MINT, self.restart_button_rect, border_radius=5)
+        restart_text = FONT_MEDIUM.render("RESTART", True, DEEP_PINK)  # 영어
         restart_text_rect = restart_text.get_rect(center=self.restart_button_rect.center)
         self.screen.blit(restart_text, restart_text_rect)
+    # --- [수정 완료] ---
