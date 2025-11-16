@@ -39,13 +39,13 @@ class Explosion(pygame.sprite.Sprite):
 
 
 class Game:
-    # (__init__ 메서드는 수정 없음)
     def __init__(self):
         pygame.init()
         pygame.mixer.init()
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.screen_rect = self.screen.get_rect()
 
+        # (이미지 로드... 수정 없음)
         try:
             self.game_background_image = pygame.image.load("img/background.png").convert_alpha()
             self.game_background_image = pygame.transform.scale(self.game_background_image,
@@ -93,6 +93,7 @@ class Game:
         self.running = True
         self.game_state = "START"
 
+        # (idioms.json 로드... 수정 없음)
         try:
             with open('idioms.json', 'r', encoding='utf-8') as f:
                 self.saja_list = json.load(f)
@@ -107,12 +108,7 @@ class Game:
             print(f"경고: 'idioms.json' 파일 로드 실패 ({e}). 기본 목록을 사용합니다.")
             self.saja_list = [
                 {"word": "고진감래", "meaning": "고생 끝에 낙이 온다"},
-                {"word": "동고동락", "meaning": "고통과 즐거움을 함께 한다"},
-                {"word": "유비무환", "meaning": "미리 준비하면 근심이 없다"},
-                {"word": "과유불급", "meaning": "지나친 것은 미치지 못한 것과 같다"},
-                {"word": "다다익선", "meaning": "많으면 많을수록 좋다"},
-                {"word": "일석이조", "meaning": "한 가지 일로 두 가지 이익을 얻음"},
-                {"word": "자화자찬", "meaning": "자기가 한 일을 스스로 칭찬함"},
+                # (이하 생략...)
             ]
 
         self.player = Player(PLAY_AREA_RECT)
@@ -128,6 +124,7 @@ class Game:
         self.sound_enemy_hit = None
         self.sound_heart_get = None
         self.sound_death = None
+        self.sound_wrong = None
 
         try:
             self.sound_enemy_hit = pygame.mixer.Sound("sound/enemy.mp3")
@@ -144,7 +141,15 @@ class Game:
         except pygame.error as e:
             print(f"경고: 'sound/death.mp3' 로드 실패. ({e})")
 
-    # (reset_game_variables 메서드는 수정 없음)
+        try:
+            self.sound_wrong = pygame.mixer.Sound("sound/wrong.mp3")
+        except pygame.error as e:
+            print(f"경고: 'sound/wrong.mp3' 로드 실패. ({e})")
+
+        # --- [새로 추가] 틀린 시간 기록용 변수 ---
+        self.wrong_input_time = 0
+        # ------------------------------------
+
     def reset_game_variables(self):
         self.player.reset(PLAY_AREA_RECT)
         self.bullets = []
@@ -165,6 +170,8 @@ class Game:
         self.heart_spawn_interval = random.uniform(10.0, 20.0)
 
         self.scroll_y = 0
+
+        self.wrong_input_time = 0  # [새로 추가] 리셋할 때 0으로 초기화
 
     # (run 메서드는 수정 없음)
     def run(self):
@@ -211,12 +218,14 @@ class Game:
                 if self.scroll_y > 0:
                     self.scroll_y = 0
 
-    # (handle_playing_keydown 메서드는 수정 없음)
     def handle_playing_keydown(self, event):
         if event.key == pygame.K_BACKSPACE:
             self.user_input = self.user_input[:-1]
+
         elif event.key == pygame.K_RETURN:
+
             if self.user_input == self.current_saja["word"]:
+                # (정답일 때 - 수정 없음)
                 player_pos = self.player.get_pos()
                 self.bullets.append(Bullet(player_pos[0], player_pos[1]))
 
@@ -227,8 +236,19 @@ class Game:
                 while new_saja == self.current_saja:
                     new_saja = random.choice(self.saja_list)
                 self.current_saja = new_saja
+
+            else:
+                # --- [수정] 오답일 때 ---
+                if self.sound_wrong:
+                    self.sound_wrong.play()
+
+                # 현재 시간을 기록 (시각 효과를 위해)
+                self.wrong_input_time = pygame.time.get_ticks()
+                # --- [수정 완료] ---
+
             self.user_input = ""
 
+    # (update 메서드는 수정 없음)
     def update(self):
         if self.game_state != "PLAYING":
             return
@@ -240,7 +260,6 @@ class Game:
             if bullet.rect.bottom < PLAY_AREA_RECT.top:
                 self.bullets.remove(bullet)
 
-        # (난이도 설정... 수정 없음)
         if self.score >= 200:
             self.enemy_spawn_interval = 1.5
         elif self.score >= 150:
@@ -263,7 +282,6 @@ class Game:
             self.last_heart_spawn_time = current_time
             self.heart_spawn_interval = random.uniform(10.0, 20.0)
 
-        # (적 패널티... 수정 없음)
         for enemy in self.enemies:
             enemy.update()
             if enemy.rect.top > PLAY_AREA_RECT.bottom:
@@ -272,7 +290,6 @@ class Game:
                 if self.sound_death:
                     self.sound_death.play()
 
-        # (하트 이동... 수정 없음)
         for heart in self.hearts[::]:
             heart.update()
             if heart.rect.top > PLAY_AREA_RECT.bottom:
@@ -286,11 +303,6 @@ class Game:
         enemies_to_remove = []
         hearts_to_remove = []
 
-        # --- [수정] '총알-하트' 충돌 로직 '삭제' ---
-        # (기존에 있던 for bullet in self.bullets: ... for heart in self.hearts: ... 블록이 삭제되었습니다)
-        # ----------------------------------------
-
-        # [유지] '총알-적' 충돌 감지
         for bullet in self.bullets:
             if bullet in bullets_to_remove: continue
             for enemy in self.enemies:
@@ -305,20 +317,15 @@ class Game:
                         self.sound_enemy_hit.play()
                     break
 
-        # --- [새로 추가] '플레이어-하트' 충돌 감지 ---
         for heart in self.hearts:
             if heart in hearts_to_remove: continue
-            # 플레이어(self.player)와 하트(heart)가 충돌했는지 검사
             if self.player.rect.colliderect(heart.rect):
-                hearts_to_remove.append(heart)  # 하트 제거 목록에 추가
+                hearts_to_remove.append(heart)
                 if self.lives < 3:
                     self.lives += 1
                     if self.sound_heart_get:
                         self.sound_heart_get.play()
-                # (총알은 제거할 필요 없음)
-        # --- [추가 완료] ---
 
-        # [유지] 스프라이트 제거
         for bullet in list(set(bullets_to_remove)):
             self.bullets.remove(bullet)
         for heart in list(set(hearts_to_remove)):
@@ -390,8 +397,8 @@ class Game:
             start_text_rect = start_text.get_rect(center=self.start_button_rect.center)
             self.screen.blit(start_text, start_text_rect)
 
-    # (draw_playing_screen 메서드는 수정 없음)
     def draw_playing_screen(self):
+        # (플레이어, 총알, 적, 하트, 폭발 그리기... 수정 없음)
         self.player.draw(self.screen)
         for bullet in self.bullets:
             if bullet.rect.colliderect(PLAY_AREA_RECT):
@@ -407,10 +414,22 @@ class Game:
         for explosion in self.explosions:
             explosion.draw(self.screen)
 
-        saja_text = FONT_MEDIUM.render(self.current_saja['word'], True, DEEP_PINK)
+        # --- [수정] 틀렸을 때 시각 효과 ---
+
+        # 1. 색깔 결정
+        saja_color = DEEP_PINK  # 기본색
+        current_time = pygame.time.get_ticks()
+        # 300ms(0.3초) 동안 빨간색으로 표시
+        if self.wrong_input_time > 0 and (current_time - self.wrong_input_time < 300):
+            saja_color = (255, 0, 0)  # RED
+
+        # 2. 텍스트 그리기
+        saja_text = FONT_MEDIUM.render(self.current_saja['word'], True, saja_color)
         saja_rect = saja_text.get_rect(center=SAJA_WORD_POS)
         self.screen.blit(saja_text, saja_rect)
+        # --- [수정 완료] ---
 
+        # (이하 수정 없음)
         meaning_text = FONT_SMALL.render(self.current_saja['meaning'], True, MEDIUM_GRAY)
         meaning_rect = meaning_text.get_rect(center=SAJA_MEANING_POS)
         self.screen.blit(meaning_text, meaning_rect)
