@@ -35,5 +35,4 @@ except FileNotFoundError:
     print("      'main.py'가 있는 곳에 'font'라는 이름의 폴더를 만들어주세요.")
 
 print("-" * 40)
-# 사용자가 창을 바로 닫지 않도록 잠시 대기
 input("확인이 끝났으면 Enter 키를 눌러 창을 닫으세요...")

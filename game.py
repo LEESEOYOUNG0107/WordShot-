@@ -9,7 +9,7 @@ from bullet import Bullet
 from heart import Heart
 
 
-# --- 폭발 효과 클래스 (수정 없음) ---
+# --- 폭발 효과 클래스  ---
 class Explosion(pygame.sprite.Sprite):
     def __init__(self, center):
         super().__init__()
@@ -358,7 +358,6 @@ class Game:
             lives_rect = lives_text.get_rect(center=LIVES_POS)
             self.screen.blit(lives_text, lives_rect)
 
-    # (draw 메서드는 수정 없음)
     def draw(self):
         self.screen.fill(BLACK)
         if self.game_background_image:
@@ -382,13 +381,11 @@ class Game:
 
         pygame.display.flip()
 
-    # (draw_start_screen 메서드는 수정 없음)
     def draw_start_screen(self):
         if self.logo_image:
             logo_rect = self.logo_image.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery - 40))
             self.screen.blit(self.logo_image, logo_rect)
         else:
-            # [수정] (참고) 시작 화면 텍스트도 영어로 통일 (Start)
             title_text = FONT_LARGE.render("WordShot", True, DEEP_PINK)
             title_rect = title_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery - 40))
             self.screen.blit(title_text, title_rect)
@@ -401,7 +398,6 @@ class Game:
             start_text_rect = start_text.get_rect(center=self.start_button_rect.center)
             self.screen.blit(start_text, start_text_rect)
 
-    # (draw_playing_screen 메서드는 수정 없음)
     def draw_playing_screen(self):
         self.player.draw(self.screen)
         for bullet in self.bullets:
@@ -439,10 +435,9 @@ class Game:
         input_rect = input_text.get_rect(midbottom=(UI_CENTER_X, INPUT_BOX_Y))
         self.screen.blit(input_text, input_rect)
 
-    # --- [수정] '게임 오버 요약' 화면 (영어 & 디자인) ---
     def draw_game_over_summary_screen(self):
 
-        # 1. [새 디자인] 요약 패널(카드) 그리기
+        # 요약 패널(카드) 그리기
         panel_width = PLAY_AREA_RECT.width * 0.9
         panel_height = PLAY_AREA_RECT.height * 0.5
         panel_rect = pygame.Rect(0, 0, panel_width, panel_height)
@@ -453,17 +448,17 @@ class Game:
         # 패널 테두리 (민트)
         pygame.draw.rect(self.screen, MINT, panel_rect, 3, border_radius=10)
 
-        # 2. "GAME OVER" 타이틀 (패널 안에)
+        # "GAME OVER" 타이틀 (패널 안에)
         game_over_text = FONT_LARGE.render("GAME OVER", True, PASTEL_PINK)
         game_over_rect = game_over_text.get_rect(center=(panel_rect.centerx, panel_rect.top + 50))
         self.screen.blit(game_over_text, game_over_rect)
 
-        # 3. "FINAL SCORE" (패널 안에)
+        # "FINAL SCORE"
         final_score_text = FONT_MEDIUM.render(f"FINAL SCORE: {self.score}", True, DEEP_PINK)
         final_score_rect = final_score_text.get_rect(center=(panel_rect.centerx, game_over_rect.bottom + 40))
         self.screen.blit(final_score_text, final_score_rect)
 
-        # 4. "NEXT" 버튼 (화면 하단)
+        # "NEXT" 버튼
         self.next_button_rect = pygame.Rect(0, 0, 150, 40)
         self.next_button_rect.center = (PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.bottom - 25)
 
@@ -472,20 +467,17 @@ class Game:
         next_text_rect = next_text.get_rect(center=self.next_button_rect.center)
         self.screen.blit(next_text, next_text_rect)
 
-    # --- [수정 완료] ---
-
-    # --- [수정] '사자성어 목록' 화면 (영어) ---
     def draw_idiom_list_screen(self):
-        # 1. 타이틀 (영어)
+        # 타이틀 (영어)
         title_text = FONT_LARGE.render("MY IDIOM LIST", True, PASTEL_PINK)
         title_rect = title_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.top + 40))
         self.screen.blit(title_text, title_rect)
 
-        # 2. 'RESTART' 버튼 (영어)
+        # 'RESTART' 버튼 (영어)
         self.restart_button_rect = pygame.Rect(0, 0, 150, 40)
         self.restart_button_rect.center = (PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.bottom - 25)
 
-        # 3. 스크롤 영역 (수정 없음)
+        # 스크롤 영역 (수정 없음)
         list_area_top = title_rect.bottom + 10
         list_area_bottom = self.restart_button_rect.top - 10
         clip_rect = pygame.Rect(
@@ -495,7 +487,7 @@ class Game:
 
         self.screen.set_clip(clip_rect)
 
-        # 4. 카드 레이아웃 변수 (수정 없음)
+        # 카드 레이아웃 변수
         start_x = PLAY_AREA_RECT.left + 10
         max_width = PLAY_AREA_RECT.width - 20
         current_y = list_area_top + self.scroll_y
@@ -504,7 +496,7 @@ class Game:
         card_spacing = 8
         line_height_small = FONT_SMALL.get_height()
 
-        # 5. 카드 목록 그리기 (로직 수정 없음)
+        # 카드 목록 그리기
         for saja_dict in self.correct_saja_list:
 
             word_text_surface = FONT_SMALL.render(saja_dict['word'], True, DEEP_PINK)
@@ -549,9 +541,8 @@ class Game:
 
         self.screen.set_clip(None)
 
-        # 6. 'RESTART' 버튼 그리기 (영어)
+        # 'RESTART' 버튼 그리기 (영어)
         pygame.draw.rect(self.screen, MINT, self.restart_button_rect, border_radius=5)
         restart_text = FONT_MEDIUM.render("RESTART", True, DEEP_PINK)  # 영어
         restart_text_rect = restart_text.get_rect(center=self.restart_button_rect.center)
         self.screen.blit(restart_text, restart_text_rect)
-    # --- [수정 완료] ---

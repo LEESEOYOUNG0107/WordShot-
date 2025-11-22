@@ -2,7 +2,6 @@ import pygame
 import random
 from settings import *
 
-
 class Enemy(pygame.sprite.Sprite):
     # 'current_score'를 인수로 받습니다.
     def __init__(self, play_area_rect, current_score):
@@ -26,7 +25,6 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.x = random.randrange(self.play_area_rect.left, self.play_area_rect.right - self.rect.width)
         self.rect.bottom = self.play_area_rect.top
 
-        # --- [수정] 50점 단위로 속도(speed)를 다르게 설정 ---
         if current_score >= 200:
             self.speed = 5  # Level 5 (매우 빠름)
         elif current_score >= 150:
@@ -37,7 +35,6 @@ class Enemy(pygame.sprite.Sprite):
             self.speed = 2  # Level 2
         else:
             self.speed = 1  # Level 1 (느림)
-        # --- [수정 완료] ---
 
     def update(self):
         self.rect.y += self.speed

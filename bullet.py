@@ -1,14 +1,13 @@
 import pygame
 from settings import *
 
-
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
 
-        # [수정] 총알 이미지 로드
+        # 총알 이미지 로드
         try:
-            # [유지] .png 파일은 .convert_alpha() 사용 (투명도 지원)
+            # .png 파일은 .convert_alpha() 사용
             original_image = pygame.image.load("img/bullet.png").convert_alpha()
 
             # 이미지 비율 유지하면서 너비 10픽셀로 조정

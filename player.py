@@ -8,7 +8,7 @@ class Player(pygame.sprite.Sprite):
 
         self.play_area_rect = play_area_rect
 
-        # [수정] 플레이어 이미지 로드
+        # 플레이어 이미지 로드
         try:
             # .png 파일이므로 .convert_alpha() 사용 (투명도 지원)
             original_image = pygame.image.load("img/character.png").convert_alpha()
@@ -31,12 +31,7 @@ class Player(pygame.sprite.Sprite):
         self.play_area_rect = play_area_rect
         # 플레이어를 게임 영역의 중앙 하단에 위치
         self.rect.centerx = self.play_area_rect.centerx
-
-        #
-        # [수정] Y 위치: 5픽셀 틈 제거, 맨 밑으로
-        #
         self.rect.bottom = self.play_area_rect.bottom + 15
-        # (기존 코드: self.play_area_rect.bottom - 5)
 
     def update(self):
         # 키 입력 처리
@@ -56,5 +51,5 @@ class Player(pygame.sprite.Sprite):
         screen.blit(self.image, self.rect)
 
     def get_pos(self):
-        # 총알 발사 위치 (이미지의 중앙 상단)ㄴ
+        # 총알 발사 위치 (이미지의 중앙 상단)
         return self.rect.centerx, self.rect.top
