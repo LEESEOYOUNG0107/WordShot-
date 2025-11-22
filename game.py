@@ -8,8 +8,7 @@ from enemy import Enemy
 from bullet import Bullet
 from heart import Heart
 
-
-# --- 폭발 효과 클래스  ---
+# 폭발 효과 클래스
 class Explosion(pygame.sprite.Sprite):
     def __init__(self, center):
         super().__init__()
@@ -34,12 +33,7 @@ class Explosion(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, self.rect)
 
-
-# ------------------------------------
-
-
 class Game:
-    # (__init__ 메서드는 수정 없음)
     def __init__(self):
         pygame.init()
         pygame.mixer.init()
@@ -113,7 +107,6 @@ class Game:
         self.player = Player(PLAY_AREA_RECT)
         self.reset_game_variables()
 
-        # (사운드 로드... 수정 없음)
         try:
             pygame.mixer.music.load("sound/bgm.mp3")
             pygame.mixer.music.play(-1)
@@ -147,7 +140,6 @@ class Game:
 
         self.wrong_input_time = 0
 
-    # (reset_game_variables 메서드는 수정 없음)
     def reset_game_variables(self):
         self.player.reset(PLAY_AREA_RECT)
         self.bullets = []
@@ -170,7 +162,6 @@ class Game:
         self.scroll_y = 0
         self.wrong_input_time = 0
 
-    # (run 메서드는 수정 없음)
     def run(self):
         while self.running:
             self.handle_events()
@@ -179,7 +170,6 @@ class Game:
             self.clock.tick(60)
         pygame.quit()
 
-    # (handle_events 메서드는 수정 없음)
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -222,7 +212,6 @@ class Game:
                 if self.scroll_y > 0:
                     self.scroll_y = 0
 
-    # (handle_playing_keydown 메서드는 수정 없음)
     def handle_playing_keydown(self, event):
         if event.key == pygame.K_BACKSPACE:
             self.user_input = self.user_input[:-1]
@@ -248,7 +237,6 @@ class Game:
 
             self.user_input = ""
 
-    # (update 메서드는 수정 없음)
     def update(self):
         if self.game_state != "PLAYING":
             return
@@ -337,7 +325,6 @@ class Game:
             if not explosion.update():
                 self.explosions.remove(explosion)
 
-    # (draw_main_ui 메서드는 수정 없음)
     def draw_main_ui(self):
         score_text = FONT_GUI.render(f"{self.score}", True, DEEP_PINK)
         score_rect = score_text.get_rect(center=SCORE_POS)
@@ -477,7 +464,7 @@ class Game:
         self.restart_button_rect = pygame.Rect(0, 0, 150, 40)
         self.restart_button_rect.center = (PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.bottom - 25)
 
-        # 스크롤 영역 (수정 없음)
+        # 스크롤 영역
         list_area_top = title_rect.bottom + 10
         list_area_bottom = self.restart_button_rect.top - 10
         clip_rect = pygame.Rect(
